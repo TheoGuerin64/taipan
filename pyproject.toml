@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "taipan"
+version = "1.0.0"
+description = "Taipan is a simple imperative language inspired by Python."
+authors = ["Theo Guerin"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
