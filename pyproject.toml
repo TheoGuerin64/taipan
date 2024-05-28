@@ -6,6 +6,11 @@ authors = ["Theo Guerin"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
+click = "^8.1.7"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.4.5"
+pyright = "^1.1.364"
 
 [build-system]
 requires = ["poetry-core"]
