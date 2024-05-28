@@ -15,6 +15,8 @@ from .compiler import compile
     "--output",
     type=click.Path(exists=False, dir_okay=False, writable=True, path_type=Path),
     default="a.out",
+    show_default=True,
+    help="Output file",
 )
 def taipan(input: Path, output: Path) -> None:
     compile(input, output)
