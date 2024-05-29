@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "taipan"
-version = "1.0.0"
-description = "Taipan is a simple imperative language inspired by Python."
+version = "0.1.0"
+description = "Taipan is a simple imperative language."
 authors = ["Theo Guerin"]
 
 [tool.poetry.dependencies]
@@ -11,7 +11,12 @@ click = "^8.1.7"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.5"
 pyright = "^1.1.364"
+sv-ttk = "^2.6.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+extend-select = ["I"]
+line-length = 100

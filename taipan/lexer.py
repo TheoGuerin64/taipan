@@ -1,0 +1,163 @@
+from dataclasses import dataclass
+from enum import Enum, auto
+from pathlib import Path
+
+
+class LexerError(Exception):
+    pass
+
+
+class TokenKind(Enum):
+    EOF = auto()
+    NEWLINE = auto()
+    IDENTIFIER = auto()
+    OPEN_BRACE = auto()
+    CLOSE_BRACE = auto()
+    NUMBER = auto()
+    STRING = auto()
+    IF = auto()
+    WHILE = auto()
+    INPUT = auto()
+    PRINT = auto()
+    ASSIGNMENT = auto()
+    PLUS = auto()
+    MINUS = auto()
+    MULTIPLICATION = auto()
+    DIVISION = auto()
+    MODULO = auto()
+    NOT = auto()
+    EQUAL = auto()
+    NOT_EQUAL = auto()
+    LESS = auto()
+    LESS_OR_EQUAL = auto()
+    GREATER = auto()
+    GREATER_OR_EQUAL = auto()
+
+
+@dataclass(kw_only=True)
+class Token:
+    kind: TokenKind
+    value: str | float | None = None
+
+
+class Lexer:
+    def __init__(self, input: Path) -> None:
+        """raise LexerError if cannot read file"""
+        try:
+            with input.open() as file:
+                self.source = file.read()
+        except OSError as error:
+            raise LexerError(f"Cannot read file: {error}")
+
+        self.source += "\n"
+        self.index = 0
+        self.char = self.source[0] if len(self.source) > 0 else "\0"
+
+    def read_char(self) -> None:
+        self.index += 1
+        self.char = self.source[self.index] if self.index < len(self.source) else "\0"
+
+    def peek_char(self) -> str:
+        if self.index + 1 >= len(self.source):
+            return "\0"
+        return self.source[self.index + 1]
+
+    def skip_whitespaces(self) -> None:
+        while self.char.isspace():
+            self.read_char()
+
+    def skip_comments(self) -> None:
+        if self.char == "#":
+            while self.char != "\n":
+                self.read_char()
+
+    def get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
+        if self.peek_char() == next:
+            self.read_char()
+            return Token(kind=if_next)
+        return Token(kind=otherwise)
+
+    def get_string_token(self) -> Token:
+        self.read_char()
+        start = self.index
+        while self.char != '"':
+            if self.char == "\r" or self.char == "\n":
+                raise LexerError("String literal is not closed")
+            self.read_char()
+        return Token(kind=TokenKind.STRING, value=self.source[start : self.index])
+
+    def get_number_token(self) -> Token:
+        start = self.index
+        while self.peek_char().isdigit():
+            self.read_char()
+        if self.peek_char() == ".":
+            self.read_char()
+            while self.peek_char().isdigit():
+                self.read_char()
+
+        raw_value = self.source[start : self.index + 1]
+        try:
+            value = float(raw_value)
+        except ValueError:
+            raise LexerError(f"Invalid number: {raw_value}")
+        return Token(kind=TokenKind.NUMBER, value=value)
+
+    def read_identifier(self) -> str:
+        start = self.index
+        while self.peek_char().isalnum():
+            self.read_char()
+        return self.source[start : self.index + 1]
+
+    def next_token(self) -> Token:
+        self.skip_whitespaces()
+        self.skip_comments()
+
+        match self.char:
+            case "\0":
+                token = Token(kind=TokenKind.EOF)
+            case "\n":
+                token = Token(kind=TokenKind.NEWLINE)
+            case "+":
+                token = Token(kind=TokenKind.PLUS)
+            case "-":
+                token = Token(kind=TokenKind.MINUS)
+            case "*":
+                token = Token(kind=TokenKind.MULTIPLICATION)
+            case "/":
+                token = Token(kind=TokenKind.DIVISION)
+            case "%":
+                token = Token(kind=TokenKind.MODULO)
+            case "{":
+                token = Token(kind=TokenKind.OPEN_BRACE)
+            case "}":
+                token = Token(kind=TokenKind.CLOSE_BRACE)
+            case "=":
+                token = self.get_two_char_token("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT)
+            case "!":
+                token = self.get_two_char_token("=", TokenKind.NOT_EQUAL, TokenKind.NOT)
+            case "<":
+                token = self.get_two_char_token("=", TokenKind.LESS_OR_EQUAL, TokenKind.LESS)
+            case ">":
+                token = self.get_two_char_token("=", TokenKind.GREATER_OR_EQUAL, TokenKind.GREATER)
+            case '"':
+                token = self.get_string_token()
+            case char if char.isdigit():
+                token = self.get_number_token()
+            case char if char.isalpha():
+                identifier = self.read_identifier()
+                match identifier:
+                    case "if":
+                        token = Token(kind=TokenKind.IF)
+                    case "while":
+                        token = Token(kind=TokenKind.WHILE)
+                    case "input":
+                        token = Token(kind=TokenKind.INPUT)
+                    case "print":
+                        token = Token(kind=TokenKind.PRINT)
+                    case _:
+                        token = Token(kind=TokenKind.IDENTIFIER, value=identifier)
+            case other:
+                raise LexerError(f"Unknown token: {other}")
+
+        self.read_char()
+        return token
