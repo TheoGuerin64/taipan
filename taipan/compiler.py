@@ -1,12 +1,11 @@
 from pathlib import Path
 
+from . import parser
 from .ast import show_node
 from .lexer import Lexer
-from .parser import Parser
 
 
-def compile(input: Path, output: Path) -> None:
+def run(input: Path, output: Path) -> None:
     lexer = Lexer(input)
-    parser = Parser(lexer)
-    ast = parser.parse()
+    ast = parser.run(lexer)
     show_node(ast.root)

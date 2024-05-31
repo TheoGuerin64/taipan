@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from .compiler import compile
+from . import compiler
 
 
 @click.command()
@@ -19,7 +19,7 @@ from .compiler import compile
     help="Output file",
 )
 def taipan(input: Path, output: Path) -> None:
-    compile(input, output)
+    compiler.run(input, output)
 
 
 taipan()

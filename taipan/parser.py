@@ -31,11 +31,6 @@ class Parser:
         self.next_token()
         self.next_token()
 
-    def parse(self) -> AST:
-        ast = AST()
-        self.program(ast.root)
-        return ast
-
     def match_token(self, token_kind: TokenKind) -> None:
         if self.current_token.kind != token_kind:
             raise ParserError(f"Expected {token_kind}, got {self.current_token.kind}")
@@ -211,3 +206,10 @@ class Parser:
         self.match_token(TokenKind.NEWLINE)
         while self.current_token.kind == TokenKind.NEWLINE:
             self.next_token()
+
+
+def run(lexer: Lexer) -> AST:
+    parser = Parser(lexer)
+    ast = AST()
+    parser.program(ast.root)
+    return ast
