@@ -1,10 +1,8 @@
-import subprocess
-import tempfile
 from pathlib import Path
 
 import click
 
-from .compiler import compile
+from . import compiler
 from .exceptions import TaipanException
 
 
@@ -22,7 +20,10 @@ def build(input: Path, output: Path | None, c: bool) -> None:
         output = Path(input.name.removesuffix(".tp"))
 
     try:
-        compile(input, output, compile_to_c=c)
+        if c:
+            compiler.compile_to_c(input, output)
+        else:
+            compiler.compile(input, output)
     except TaipanException as error:
         raise click.ClickException(str(error))
 
@@ -31,15 +32,10 @@ def build(input: Path, output: Path | None, c: bool) -> None:
 @click.argument("input", type=click.Path(path_type=Path))
 @click.argument("args", type=click.STRING, nargs=-1)
 def run(input: Path, args: tuple[str]) -> None:
-    temp = Path(tempfile.mktemp())
     try:
-        compile(input, temp)
+        compiler.run(input, args)
     except TaipanException as error:
-        temp.unlink(True)
         raise click.ClickException(str(error))
-
-    subprocess.call([temp, *args])
-    temp.unlink()
 
 
 if __name__ == "__main__":

@@ -1,11 +1,11 @@
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 
 from .ast import AST
 from .emitter import Emitter
-from .exceptions import TaipanException
+from .exceptions import FileError, TaipanException
 from .lexer import Lexer
 from .parser import Parser
 
@@ -17,21 +17,66 @@ def find_gcc() -> Path:
     return Path(gcc)
 
 
-def compile(input: Path, output: Path, *, compile_to_c: bool = False) -> None:
-    gcc = find_gcc()
+def generate_c_code(input: Path) -> str:
     lexer = Lexer(input)
     parser = Parser(lexer)
-    emitter = Emitter()
-
     ast = AST(parser.program())
+
+    emitter = Emitter()
     emitter.emit(ast.root)
+    return emitter.code
 
-    if compile_to_c:
-        with output.with_suffix(".c").open("w") as file:
-            file.write(emitter.code)
-    else:
-        with NamedTemporaryFile(mode="w", suffix=".c") as temp:
-            temp.write(emitter.code)
-            temp.flush()
 
-            subprocess.call([gcc, "-o", output, temp.name])
+def save_code_to_tempfile(temp_dir: str, code: str) -> Path:
+    temp = tempfile.NamedTemporaryFile("w+t", dir=temp_dir, suffix=".c", delete=False)
+    temp.write(code)
+    temp.close()
+
+    return Path(temp.name)
+
+
+def generate_executable(temp_dir: str, gcc: Path, source: Path) -> Path:
+    temp = tempfile.NamedTemporaryFile("w+b", dir=temp_dir, suffix=".c", delete=False)
+    temp.close()
+
+    result = subprocess.run(
+        [gcc, "-o", temp.name, source],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+    assert result.returncode == 0, result.stderr.decode("utf-8")
+
+    return Path(temp.name)
+
+
+def compile_to_c(input: Path, output: Path) -> None:
+    code = generate_c_code(input)
+    output.write_text(code)
+
+
+def compile(input: Path, output: Path) -> None:
+    gcc = find_gcc()
+    code = generate_c_code(input)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_source = save_code_to_tempfile(temp_dir, code)
+        temp_output = generate_executable(temp_dir, gcc, temp_source)
+
+        output.touch()
+        try:
+            output.write_bytes(temp_output.read_bytes())
+        except OSError as error:
+            raise FileError(output, error.strerror)
+
+    output.chmod(0o755)
+
+
+def run(input: Path, args: tuple[str]) -> int:
+    gcc = find_gcc()
+    code = generate_c_code(input)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_source = save_code_to_tempfile(temp_dir, code)
+        temp_output = generate_executable(temp_dir, gcc, temp_source)
+
+        return subprocess.run([temp_output, *args]).returncode

@@ -1,1 +1,1 @@
-from .compiler import compile  # noqa: F401
+from .compiler import compile, compile_to_c, run  # noqa: F401
