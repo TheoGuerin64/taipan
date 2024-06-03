@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from .ast import (
     Assignment,
     BinaryExpression,
@@ -108,7 +106,3 @@ class Emitter:
         for library in self.libraries:
             header += f"#include <{library}>\n"
         self.code = header + self.code
-
-    def write_to_file(self, path: Path):
-        with path.open("w") as file:
-            file.write(self.code)
