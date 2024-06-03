@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import StrEnum
 
 from .lexer import Token, TokenKind
 
@@ -34,12 +34,12 @@ class String(Literal[str]):
     pass
 
 
-class ArithmeticOperator(Enum):
-    ADD = auto()
-    SUBSTRACT = auto()
-    MULTIPLY = auto()
-    DIVIDE = auto()
-    MODULO = auto()
+class ArithmeticOperator(StrEnum):
+    ADD = "+"
+    SUBSTRACT = "-"
+    MULTIPLY = "*"
+    DIVIDE = "/"
+    MODULO = "%"
 
     @staticmethod
     def expression_from_token(token: Token) -> ArithmeticOperator | None:
@@ -67,9 +67,9 @@ class BinaryExpression(Node):
     operator: ArithmeticOperator
 
 
-class UnaryOperator(Enum):
-    POSITIVE = auto()
-    NEGATIVE = auto()
+class UnaryOperator(StrEnum):
+    POSITIVE = "+"
+    NEGATIVE = "-"
 
     @staticmethod
     def from_token(token: Token) -> UnaryOperator | None:
@@ -86,13 +86,13 @@ class UnaryExpression(Node):
     operator: UnaryOperator
 
 
-class ComparaisonOperator(Enum):
-    EQUAL = auto()
-    NOT_EQUAL = auto()
-    LESS = auto()
-    LESS_EQUAL = auto()
-    GREATER = auto()
-    GREATER_EQUAL = auto()
+class ComparaisonOperator(StrEnum):
+    EQUAL = "=="
+    NOT_EQUAL = "!="
+    LESS = "<"
+    LESS_EQUAL = "<="
+    GREATER = ">"
+    GREATER_EQUAL = ">="
 
     @staticmethod
     def from_token(token: Token) -> ComparaisonOperator | None:
