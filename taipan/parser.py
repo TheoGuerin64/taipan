@@ -1,20 +1,24 @@
+from pathlib import Path
+
 from .ast import (
     AST,
-    ArithmeticOperatorKind,
-    ArithmeticOperatorNode,
-    AssignmentNode,
-    ComparaisonNode,
-    ComparaisonOperatorKind,
-    ComparaisonOperatorNode,
-    ExpressionNode,
-    IdentifierNode,
-    KeywordKind,
-    KeywordNode,
-    LiteralKind,
-    LiteralNode,
-    Node,
-    UnaryOperatorKind,
-    UnaryOperatorNode,
+    ArithmeticOperator,
+    Assignment,
+    BinaryExpression,
+    Block,
+    Comparaison,
+    ComparaisonOperator,
+    Identifier,
+    If,
+    Input,
+    Number,
+    Print,
+    Program,
+    Statement,
+    String,
+    UnaryExpression,
+    UnaryOperator,
+    While,
 )
 from .lexer import Lexer, Token, TokenKind
 
@@ -40,165 +44,125 @@ class Parser:
         self.current_token = self.peek_token
         self.peek_token = self.lexer.next_token()
 
-    def program(self, parent: Node) -> None:
+    def program(self) -> Program:
         while self.current_token.kind == TokenKind.NEWLINE:
             self.next_token()
 
+        block = Block()
         while self.current_token.kind != TokenKind.EOF:
-            self.statement(parent)
+            block.statements.append(self.statement())
 
-    def comparaison(self, parent: Node) -> None:
-        comparaison_node = ComparaisonNode()
-        parent.childrens.append(comparaison_node)
+        return Program(block=block)
 
-        self.expression(comparaison_node)
-        kind = ComparaisonOperatorKind.from_token_kind(self.current_token.kind)
-        if kind is None:
+    def comparaison(self) -> Comparaison:
+        left = self.expression()
+
+        operator = ComparaisonOperator.from_token(self.current_token)
+        if operator is None:
             raise ParserError(f"Expected comparaison operator, got {self.current_token.kind}")
-        comparaison_node.childrens.append(ComparaisonOperatorNode(kind=kind))
+        self.next_token()
+
+        right = self.expression()
+
+        node = Comparaison(left=left, right=right, operator=operator)
+        while operator := ComparaisonOperator.from_token(self.current_token):
+            right = self.expression()
+            node = Comparaison(left=node, right=right, operator=operator)
+            self.next_token()
+        return node
+
+    def expression(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
+        node = self.term()
+        while operator := ArithmeticOperator.expression_from_token(self.current_token):
+            self.next_token()
+            node = BinaryExpression(left=node, right=self.term(), operator=operator)
+        return node
+
+    def term(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
+        node = self.unary()
+        while operator := ArithmeticOperator.term_from_token(self.current_token):
+            self.next_token()
+            node = BinaryExpression(left=node, right=self.unary(), operator=operator)
+        return node
+
+    def unary(self) -> UnaryExpression | Identifier | Number:
+        operator = UnaryOperator.from_token(self.current_token)
+        if operator is None:
+            return self.literal()
 
         self.next_token()
-        self.expression(comparaison_node)
+        return UnaryExpression(operator=operator, value=self.literal())
 
-        while kind := ComparaisonOperatorKind.from_token_kind(self.current_token.kind):
-            node = ComparaisonOperatorNode(kind=kind)
-            comparaison_node.childrens.append(node)
+    def number(self) -> Number:
+        assert isinstance(self.current_token.value, float)
+        node = Number(value=self.current_token.value)
+        self.next_token()
+        return node
 
-            self.next_token()
-            self.expression(node)
+    def identifier(self) -> Identifier:
+        assert isinstance(self.current_token.value, str)
+        node = Identifier(name=self.current_token.value)
+        self.next_token()
+        return node
 
-    def expression(self, parent: Node) -> None:
-        node = ExpressionNode()
-        parent.childrens.append(node)
-
-        self.term(node)
-        while True:
-            match self.current_token.kind:
-                case TokenKind.PLUS:
-                    kind = ArithmeticOperatorKind.ADD
-                case TokenKind.MINUS:
-                    kind = ArithmeticOperatorKind.SUBSTRACT
-                case _:
-                    break
-            node.childrens.append(ArithmeticOperatorNode(kind=kind))
-
-            self.next_token()
-            self.term(node)
-
-    def term(self, parent: Node) -> None:
-        self.unary(parent)
-        while True:
-            match self.current_token.kind:
-                case TokenKind.MULTIPLICATION:
-                    kind = ArithmeticOperatorKind.MULTIPLY
-                case TokenKind.DIVISION:
-                    kind = ArithmeticOperatorKind.DIVIDE
-                case TokenKind.MODULO:
-                    kind = ArithmeticOperatorKind.MODULO
-                case _:
-                    break
-            parent.childrens.append(ArithmeticOperatorNode(kind=kind))
-
-            self.next_token()
-            self.unary(parent)
-
-    def unary(self, parent: Node) -> None:
-        kind = UnaryOperatorKind.from_token_kind(self.current_token.kind)
-        if kind is not None:
-            parent.childrens.append(UnaryOperatorNode(kind=kind))
-            self.next_token()
-
-        self.literal(parent)
-
-    def literal(self, parent: Node) -> None:
+    def literal(self) -> Identifier | Number:
         match self.current_token.kind:
             case TokenKind.NUMBER:
-                assert isinstance(self.current_token.value, float)
-                parent.childrens.append(
-                    LiteralNode(kind=LiteralKind.NUMBER, value=self.current_token.value)
-                )
+                return self.number()
             case TokenKind.IDENTIFIER:
-                assert isinstance(self.current_token.value, str)
-                parent.childrens.append(IdentifierNode(name=self.current_token.value))
+                return self.identifier()
             case _:
                 raise ParserError(f"Expected literal expression, got {self.current_token.kind}")
+
+    def block(self) -> Block:
+        block = Block()
+        self.match_token(TokenKind.OPEN_BRACE)
+        while self.current_token.kind != TokenKind.CLOSE_BRACE:
+            block.statements.append(self.statement())
         self.next_token()
+        return block
 
-    def print_statement(self, parent: Node) -> None:
-        node = KeywordNode(kind=KeywordKind.PRINT)
-        parent.childrens.append(node)
-
+    def print_statement(self) -> Print:
         self.next_token()
         match self.current_token.kind:
             case TokenKind.STRING:
                 assert isinstance(self.current_token.value, str)
-                node.childrens.append(
-                    LiteralNode(kind=LiteralKind.STRING, value=self.current_token.value)
-                )
+                value = String(value=self.current_token.value)
                 self.next_token()
             case _:
-                self.expression(node)
+                value = self.expression()
+        return Print(value=value)
 
-    def if_statement(self, parent: Node) -> None:
-        node = KeywordNode(kind=KeywordKind.IF)
-        parent.childrens.append(node)
-
+    def if_statement(self) -> If:
         self.next_token()
-        self.comparaison(node)
+        return If(condition=self.comparaison(), block=self.block())
 
-        self.match_token(TokenKind.OPEN_BRACE)
+    def while_statement(self) -> While:
         self.next_token()
+        return While(condition=self.comparaison(), block=self.block())
 
-        while self.current_token.kind != TokenKind.CLOSE_BRACE:
-            self.statement(node)
+    def input_statement(self) -> Input:
         self.next_token()
+        node = Input(identifier=self.identifier())
+        return node
 
-    def while_statement(self, parent: Node) -> None:
-        node = KeywordNode(kind=KeywordKind.WHILE)
-        parent.childrens.append(node)
-
-        self.next_token()
-        self.comparaison(node)
-
-        self.match_token(TokenKind.OPEN_BRACE)
-        while self.current_token.kind != TokenKind.CLOSE_BRACE:
-            self.statement(node)
-        self.next_token()
-
-    def input_statement(self, parent: Node) -> None:
-        node = KeywordNode(kind=KeywordKind.INPUT)
-        parent.childrens.append(node)
-        self.next_token()
-
-        if self.current_token.kind != TokenKind.IDENTIFIER:
-            raise ParserError(f"Expected identifier, got {self.current_token.kind}")
-        assert isinstance(self.current_token.value, str)
-        node.childrens.append(IdentifierNode(name=self.current_token.value))
-        self.next_token()
-
-    def assignment_statement(self, parent: Node) -> None:
-        node = AssignmentNode()
-        parent.childrens.append(node)
-
-        assert isinstance(self.current_token.value, str)
-        node.childrens.append(IdentifierNode(name=self.current_token.value))
-        self.next_token()
-
+    def assignment_statement(self) -> Assignment:
+        identifier = self.identifier()
         self.match_token(TokenKind.ASSIGNMENT)
-        self.expression(node)
+        return Assignment(identifier=identifier, expression=self.expression())
 
-    def statement(self, parent: Node) -> None:
+    def statement(self) -> Statement:
         match self.current_token.kind:
             case TokenKind.PRINT:
-                self.print_statement(parent)
+                return self.print_statement()
             case TokenKind.IF:
-                self.if_statement(parent)
+                return self.if_statement()
             case TokenKind.WHILE:
-                self.while_statement(parent)
+                return self.while_statement()
             case TokenKind.INPUT:
-                self.input_statement(parent)
+                return self.input_statement()
             case TokenKind.IDENTIFIER:
-                self.assignment_statement(parent)
+                return self.assignment_statement()
             case _:
                 raise ParserError(f"Unknown statement: {self.current_token.kind}")
 
@@ -208,8 +172,8 @@ class Parser:
             self.next_token()
 
 
-def run(lexer: Lexer) -> AST:
+def run(input: Path) -> AST:
+    lexer = Lexer(input)
     parser = Parser(lexer)
-    ast = AST()
-    parser.program(ast.root)
-    return ast
+    root = parser.program()
+    return AST(root)

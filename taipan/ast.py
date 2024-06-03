@@ -3,96 +3,90 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from .lexer import TokenKind
+from .lexer import Token, TokenKind
+
+type Expression = Identifier | Number | BinaryExpression | UnaryExpression
+type Statement = If | While | Input | Print | Assignment
 
 
 @dataclass(kw_only=True)
 class Node:
-    childrens: list[Node] = field(default_factory=list, repr=False)
-
-
-@dataclass(kw_only=True)
-class ProgramNode(Node):
-    pass
-
-
-class KeywordKind(Enum):
-    IF = auto()
-    WHILE = auto()
-    INPUT = auto()
-    PRINT = auto()
-
-
-@dataclass(kw_only=True)
-class KeywordNode(Node):
-    kind: KeywordKind
-
-
-@dataclass(kw_only=True)
-class AssignmentNode(Node):
     pass
 
 
 @dataclass(kw_only=True)
-class ExpressionNode(Node):
-    pass
-
-
-@dataclass(kw_only=True)
-class ComparaisonNode(ExpressionNode):
-    pass
-
-
-class LiteralKind(Enum):
-    NUMBER = auto()
-    STRING = auto()
-
-
-@dataclass(kw_only=True)
-class LiteralNode(Node):
-    kind: LiteralKind
-    value: str | float
-
-
-@dataclass(kw_only=True)
-class IdentifierNode(Node):
+class Identifier(Node):
     name: str
 
 
-class UnaryOperatorKind(Enum):
-    POSITIVE = auto()
-    NEGATIVE = auto()
-
-    @classmethod
-    def from_token_kind(cls, token_kind: TokenKind) -> UnaryOperatorKind | None:
-        match token_kind:
-            case TokenKind.PLUS:
-                return cls.POSITIVE
-            case TokenKind.MINUS:
-                return cls.NEGATIVE
-            case _:
-                return None
+@dataclass(kw_only=True)
+class Literal[T](Node):
+    value: T
 
 
 @dataclass(kw_only=True)
-class UnaryOperatorNode(Node):
-    kind: UnaryOperatorKind
+class Number(Literal[float]):
+    pass
 
 
-class ArithmeticOperatorKind(Enum):
+@dataclass(kw_only=True)
+class String(Literal[str]):
+    pass
+
+
+class ArithmeticOperator(Enum):
     ADD = auto()
     SUBSTRACT = auto()
     MULTIPLY = auto()
     DIVIDE = auto()
     MODULO = auto()
 
+    @staticmethod
+    def expression_from_token(token: Token) -> ArithmeticOperator | None:
+        match token.kind:
+            case TokenKind.PLUS:
+                return ArithmeticOperator.ADD
+            case TokenKind.MINUS:
+                return ArithmeticOperator.SUBSTRACT
+
+    @staticmethod
+    def term_from_token(token: Token) -> ArithmeticOperator | None:
+        match token.kind:
+            case TokenKind.MULTIPLICATION:
+                return ArithmeticOperator.MULTIPLY
+            case TokenKind.DIVISION:
+                return ArithmeticOperator.DIVIDE
+            case TokenKind.MODULO:
+                return ArithmeticOperator.MODULO
+
 
 @dataclass(kw_only=True)
-class ArithmeticOperatorNode(Node):
-    kind: ArithmeticOperatorKind
+class BinaryExpression(Node):
+    left: Expression = field(repr=False)
+    right: Expression = field(repr=False)
+    operator: ArithmeticOperator
 
 
-class ComparaisonOperatorKind(Enum):
+class UnaryOperator(Enum):
+    POSITIVE = auto()
+    NEGATIVE = auto()
+
+    @staticmethod
+    def from_token(token: Token) -> UnaryOperator | None:
+        match token.kind:
+            case TokenKind.PLUS:
+                return UnaryOperator.POSITIVE
+            case TokenKind.MINUS:
+                return UnaryOperator.NEGATIVE
+
+
+@dataclass(kw_only=True)
+class UnaryExpression(Node):
+    value: Identifier | Number = field(repr=False)
+    operator: UnaryOperator
+
+
+class ComparaisonOperator(Enum):
     EQUAL = auto()
     NOT_EQUAL = auto()
     LESS = auto()
@@ -100,55 +94,68 @@ class ComparaisonOperatorKind(Enum):
     GREATER = auto()
     GREATER_EQUAL = auto()
 
-    @classmethod
-    def from_token_kind(cls, token_kind: TokenKind) -> ComparaisonOperatorKind | None:
-        match token_kind:
+    @staticmethod
+    def from_token(token: Token) -> ComparaisonOperator | None:
+        match token.kind:
             case TokenKind.EQUAL:
-                return cls.EQUAL
+                return ComparaisonOperator.EQUAL
             case TokenKind.NOT_EQUAL:
-                return cls.NOT_EQUAL
+                return ComparaisonOperator.NOT_EQUAL
             case TokenKind.LESS:
-                return cls.LESS
-            case TokenKind.LESS_OR_EQUAL:
-                return cls.LESS_EQUAL
+                return ComparaisonOperator.LESS
+            case TokenKind.LESS_EQUAL:
+                return ComparaisonOperator.LESS_EQUAL
             case TokenKind.GREATER:
-                return cls.GREATER
-            case TokenKind.GREATER_OR_EQUAL:
-                return cls.GREATER_EQUAL
-            case _:
-                return None
+                return ComparaisonOperator.GREATER
+            case TokenKind.GREATER_EQUAL:
+                return ComparaisonOperator.GREATER_EQUAL
 
 
 @dataclass(kw_only=True)
-class ComparaisonOperatorNode(Node):
-    kind: ComparaisonOperatorKind
+class Comparaison(Node):
+    left: Expression | Comparaison = field(repr=False)
+    right: Expression | Comparaison = field(repr=False)
+    operator: ComparaisonOperator
 
 
 @dataclass(kw_only=True)
+class Block(Node):
+    statements: list[Statement] = field(default_factory=list, repr=False)
+
+
+@dataclass(kw_only=True)
+class Program(Node):
+    block: Block = field(default_factory=Block, repr=False)
+
+
+@dataclass(kw_only=True)
+class If(Node):
+    condition: Comparaison = field(repr=False)
+    block: Block = field(default_factory=Block, repr=False)
+
+
+@dataclass(kw_only=True)
+class While(Node):
+    condition: Comparaison = field(repr=False)
+    block: Block = field(default_factory=Block, repr=False)
+
+
+@dataclass(kw_only=True)
+class Input(Node):
+    identifier: Identifier = field(repr=False)
+
+
+@dataclass(kw_only=True)
+class Print(Node):
+    value: Expression | String = field(repr=False)
+
+
+@dataclass(kw_only=True)
+class Assignment(Node):
+    identifier: Identifier = field(repr=False)
+    expression: Expression = field(repr=False)
+
+
+@dataclass
 class AST:
-    root: ProgramNode = field(default_factory=ProgramNode)
-
-
-if __debug__:
-
-    def show_node(node: Node) -> None:
-        import tkinter as tk
-        from tkinter import ttk
-
-        import sv_ttk
-
-        root = tk.Tk()
-        root.title("AST")
-
-        treeview = ttk.Treeview(show="tree")
-
-        def populate_tree(node: Node, parent: str):
-            item = treeview.insert(parent, tk.END, text=str(node))
-            for child in node.childrens:
-                populate_tree(child, item)
-
-        populate_tree(node, "")
-        treeview.pack(expand=tk.YES, fill=tk.BOTH)
-
-        sv_ttk.set_theme("dark")
-        root.mainloop()
+    root: Node

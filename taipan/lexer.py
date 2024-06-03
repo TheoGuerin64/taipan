@@ -29,9 +29,9 @@ class TokenKind(Enum):
     EQUAL = auto()
     NOT_EQUAL = auto()
     LESS = auto()
-    LESS_OR_EQUAL = auto()
+    LESS_EQUAL = auto()
     GREATER = auto()
-    GREATER_OR_EQUAL = auto()
+    GREATER_EQUAL = auto()
 
 
 @dataclass(kw_only=True)
@@ -136,9 +136,9 @@ class Lexer:
             case "!":
                 token = self.get_two_char_token("=", TokenKind.NOT_EQUAL, TokenKind.NOT)
             case "<":
-                token = self.get_two_char_token("=", TokenKind.LESS_OR_EQUAL, TokenKind.LESS)
+                token = self.get_two_char_token("=", TokenKind.LESS_EQUAL, TokenKind.LESS)
             case ">":
-                token = self.get_two_char_token("=", TokenKind.GREATER_OR_EQUAL, TokenKind.GREATER)
+                token = self.get_two_char_token("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER)
             case '"':
                 token = self.get_string_token()
             case char if char.isdigit():

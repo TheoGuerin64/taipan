@@ -1,11 +1,10 @@
 from pathlib import Path
 
+from scripts.node_shower import show_node
+
 from . import parser
-from .ast import show_node
-from .lexer import Lexer
 
 
 def run(input: Path, output: Path) -> None:
-    lexer = Lexer(input)
-    ast = parser.run(lexer)
+    ast = parser.run(input)
     show_node(ast.root)

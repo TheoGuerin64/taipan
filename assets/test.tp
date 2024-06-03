@@ -11,3 +11,5 @@ while nums > 0 {
     b = c
     nums = nums - 1
 }
+
+a = a + b * 2 + 4
