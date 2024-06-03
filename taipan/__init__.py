@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -9,7 +10,15 @@ from .lexer import Lexer
 from .parser import Parser
 
 
-def compile(input: Path, output: Path, gcc: Path, c: bool) -> None:
+class TaipanError(Exception):
+    pass
+
+
+def compile(input: Path, output: Path, c: bool) -> None:
+    gcc_path = shutil.which("gcc")
+    if gcc_path is None:
+        raise TaipanError("gcc not found")
+
     lexer = Lexer(input)
     parser = Parser(lexer)
     emitter = Emitter()
@@ -25,4 +34,4 @@ def compile(input: Path, output: Path, gcc: Path, c: bool) -> None:
         temp.write(emitter.code)
         temp.flush()
 
-        subprocess.call([str(gcc), "-o", str(output), temp.name])
+        subprocess.call([gcc_path, "-o", str(output), temp.name])
