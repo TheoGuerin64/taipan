@@ -7,7 +7,7 @@ from .lexer import Lexer
 from .parser import Parser
 
 
-def run(input: Path, output: Path) -> None:
+def compile(input: Path, output: Path) -> None:
     lexer = Lexer(input)
     parser = Parser(lexer)
     ast = AST(parser.program())
