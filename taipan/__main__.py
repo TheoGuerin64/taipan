@@ -1,14 +1,11 @@
-import os
 import subprocess
 import tempfile
 from pathlib import Path
 
 import click
 
-from . import compile
-
-INPUT_TYPE = click.Path(exists=True, dir_okay=False, readable=True, path_type=Path)
-OUTPUT_TYPE = click.Path(exists=False, dir_okay=False, writable=True, path_type=Path)
+from .compiler import compile
+from .exceptions import TaipanException
 
 
 @click.group()
@@ -17,23 +14,33 @@ def cli() -> None:
 
 
 @cli.command()
-@click.argument("input", type=INPUT_TYPE)
-@click.option("-o", "--output", type=OUTPUT_TYPE, default=Path.cwd().name, show_default=True)
+@click.argument("input", type=click.Path(path_type=Path))
+@click.option("-o", "--output", type=click.Path(path_type=Path))
 @click.option("-c", type=click.BOOL, is_flag=True, default=False, help="Output C code")
-def build(input: Path, output: Path, c: bool) -> None:
-    compile(input, output, c)
+def build(input: Path, output: Path | None, c: bool) -> None:
+    if output is None:
+        output = Path(input.name.removesuffix(".tp"))
+
+    try:
+        compile(input, output, compile_to_c=c)
+    except TaipanException as error:
+        raise click.ClickException(str(error))
 
 
 @cli.command()
-@click.argument("input", type=INPUT_TYPE)
-@click.argument("args", nargs=-1, type=click.STRING)
-def run(input: Path, output: Path, args: tuple[str]) -> None:
-    path = tempfile.mkdtemp()
+@click.argument("input", type=click.Path(path_type=Path))
+@click.argument("args", type=click.STRING, nargs=-1)
+def run(input: Path, args: tuple[str]) -> None:
+    temp = Path(tempfile.mktemp())
     try:
-        compile(input, Path(path), False)
-        subprocess.call([path, *args])
-    finally:
-        os.remove(path)
+        compile(input, temp)
+    except TaipanException as error:
+        temp.unlink(True)
+        raise click.ClickException(str(error))
+
+    subprocess.call([temp, *args])
+    temp.unlink()
 
 
-cli()
+if __name__ == "__main__":
+    cli()

@@ -23,10 +23,6 @@ from .ast import (
 from .lexer import Lexer, Token, TokenKind
 
 
-class ParserError(Exception):
-    pass
-
-
 class Parser:
     def __init__(self, lexer: Lexer) -> None:
         self.lexer = lexer
@@ -37,7 +33,7 @@ class Parser:
 
     def match_token(self, token_kind: TokenKind) -> None:
         if self.current_token.kind != token_kind:
-            raise ParserError(f"Expected {token_kind}, got {self.current_token.kind}")
+            raise SyntaxError(f"Expected {token_kind}, got {self.current_token.kind}")
         self.next_token()
 
     def next_token(self) -> None:
@@ -59,7 +55,7 @@ class Parser:
 
         operator = ComparaisonOperator.from_token(self.current_token)
         if operator is None:
-            raise ParserError(f"Expected comparaison operator, got {self.current_token.kind}")
+            raise SyntaxError(f"Expected comparaison operator, got {self.current_token.kind}")
         self.next_token()
 
         right = self.expression()
@@ -112,7 +108,7 @@ class Parser:
             case TokenKind.IDENTIFIER:
                 return self.identifier()
             case _:
-                raise ParserError(f"Expected literal expression, got {self.current_token.kind}")
+                raise SyntaxError(f"Expected literal expression, got {self.current_token.kind}")
 
     def block(self) -> Block:
         block = Block()
@@ -164,7 +160,7 @@ class Parser:
             case TokenKind.IDENTIFIER:
                 return self.assignment_statement()
             case _:
-                raise ParserError(f"Unknown statement: {self.current_token.kind}")
+                raise SyntaxError(f"Expected statement, got {self.current_token.kind}")
 
     def nl(self) -> None:
         self.match_token(TokenKind.NEWLINE)

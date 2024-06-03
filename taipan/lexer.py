@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 
-
-class LexerError(Exception):
-    pass
+from .exceptions import FileError, SyntaxError
 
 
 class TokenKind(Enum):
@@ -42,25 +40,23 @@ class Token:
 
 class Lexer:
     def __init__(self, input: Path) -> None:
-        """raise LexerError if cannot read file"""
         try:
             with input.open() as file:
                 self.source = file.read()
         except OSError as error:
-            raise LexerError(f"Cannot read file: {error}")
+            raise FileError(input, error.strerror)
 
         self.source += "\n"
-        self.index = 0
-        self.char = self.source[0] if len(self.source) > 0 else "\0"
+        self.index = -1
+        self.char = ""
+        self.read_char()
 
     def read_char(self) -> None:
         self.index += 1
         self.char = self.source[self.index] if self.index < len(self.source) else "\0"
 
     def peek_char(self) -> str:
-        if self.index + 1 >= len(self.source):
-            return "\0"
-        return self.source[self.index + 1]
+        return self.source[self.index + 1] if self.index < len(self.source) else "\0"
 
     def skip_whitespaces(self) -> None:
         while self.char.isspace():
@@ -82,7 +78,7 @@ class Lexer:
         start = self.index
         while self.char != '"':
             if self.char == "\r" or self.char == "\n":
-                raise LexerError("String literal is not closed")
+                raise SyntaxError("Missing closing quote")
             self.read_char()
         return Token(kind=TokenKind.STRING, value=self.source[start : self.index])
 
@@ -99,7 +95,8 @@ class Lexer:
         try:
             value = float(raw_value)
         except ValueError:
-            raise LexerError(f"Invalid number: {raw_value}")
+            raise SyntaxError(f"Invalid number: {raw_value!r}")
+
         return Token(kind=TokenKind.NUMBER, value=value)
 
     def read_identifier(self) -> str:
@@ -157,7 +154,7 @@ class Lexer:
                     case _:
                         token = Token(kind=TokenKind.IDENTIFIER, value=identifier)
             case other:
-                raise LexerError(f"Unknown token: {other}")
+                raise SyntaxError(f"Got unexpected token: {other!r}")
 
         self.read_char()
         return token

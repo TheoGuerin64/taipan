@@ -85,7 +85,7 @@ class Emitter:
             case String():
                 self.code += f'"{node.value}"'
             case _:
-                raise ValueError(f"Unknown node: {node}")
+                assert False, node
 
     def emit_variables(self) -> None:
         variables = ""
