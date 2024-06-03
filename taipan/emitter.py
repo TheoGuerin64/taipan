@@ -28,6 +28,9 @@ class Emitter:
         match node:
             case Program():
                 self.emit(node.block)
+                self.emit_variables()
+                self.emit_main()
+                self.emit_header()
             case Block():
                 for statement in node.statements:
                     self.emit(statement)
@@ -86,19 +89,26 @@ class Emitter:
             case _:
                 raise ValueError(f"Unknown node: {node}")
 
-    def write_to_file(self, path: Path):
+    def emit_variables(self) -> None:
+        variables = ""
+        if self.variables:
+            variables += "double "
+            for index, variable in enumerate(self.variables):
+                if index > 0:
+                    variables += ","
+                variables += variable
+            variables += ";"
+        self.code = variables + self.code
+
+    def emit_main(self) -> None:
+        self.code = f"int main(){{{self.code}return 0;}}"
+
+    def emit_header(self) -> None:
         header = ""
         for library in self.libraries:
             header += f"#include <{library}>\n"
+        self.code = header + self.code
 
-        initializations = ""
-        if self.variables:
-            initializations += "double "
-            for index, variable in enumerate(self.variables):
-                if index > 0:
-                    initializations += ","
-                initializations += variable
-            initializations += ";"
-
+    def write_to_file(self, path: Path):
         with path.open("w") as file:
-            file.write(header + f"int main(){{{initializations}{self.code}}}")
+            file.write(self.code)
