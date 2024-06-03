@@ -97,7 +97,7 @@ class Emitter:
             for index, variable in enumerate(self.variables):
                 if index > 0:
                     initializations += ","
-                initializations += f"{variable}=0"
+                initializations += variable
             initializations += ";"
 
         with path.open("w") as file:
