@@ -9,13 +9,17 @@ from .lexer import Lexer
 from .parser import Parser
 
 
-def compile(input: Path, output: Path, gcc: Path) -> None:
+def compile(input: Path, output: Path, gcc: Path, c: bool) -> None:
     lexer = Lexer(input)
     parser = Parser(lexer)
     emitter = Emitter()
 
     ast = AST(parser.program())
     emitter.emit(ast.root)
+
+    if c:
+        output.with_suffix(".c").write_text(emitter.code)
+        return
 
     with NamedTemporaryFile(mode="w+", suffix=".c") as temp:
         temp.write(emitter.code)

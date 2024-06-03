@@ -26,10 +26,17 @@ from . import compile
     show_default=True,
     help="C compiler",
 )
-def taipan(input: Path, output: Path, gcc: Path | None) -> None:
+@click.option(
+    "-c",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Output C code",
+)
+def taipan(input: Path, output: Path, c: bool, gcc: Path | None) -> None:
     if gcc is None:
         raise click.ClickException("GCC not found")
-    compile(input, output, gcc)
+    compile(input, output, gcc, c)
 
 
 taipan()
