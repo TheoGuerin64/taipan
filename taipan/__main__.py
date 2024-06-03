@@ -33,7 +33,7 @@ from . import compile
     default=False,
     help="Output C code",
 )
-def taipan(input: Path, output: Path, c: bool, gcc: Path | None) -> None:
+def taipan(input: Path, output: Path, gcc: Path | None, c: bool) -> None:
     if gcc is None:
         raise click.ClickException("GCC not found")
     compile(input, output, gcc, c)
