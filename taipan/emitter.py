@@ -92,8 +92,13 @@ class Emitter:
             header += f"#include <{library}>\n"
 
         initializations = ""
-        for variable in self.variables:
-            initializations += f"double {variable}=0;"
+        if self.variables:
+            initializations += "double "
+            for index, variable in enumerate(self.variables):
+                if index > 0:
+                    initializations += ","
+                initializations += f"{variable}=0"
+            initializations += ";"
 
         with path.open("w") as file:
             file.write(header + f"int main(){{{initializations}{self.code}}}")
