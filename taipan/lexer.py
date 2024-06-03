@@ -40,6 +40,9 @@ class Token:
 
 class Lexer:
     def __init__(self, input: Path) -> None:
+        if input.suffix != ".tp":
+            raise FileError(input, "File must have a .tp extension")
+
         try:
             with input.open() as file:
                 self.source = file.read()
