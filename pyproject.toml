@@ -12,6 +12,7 @@ click = "^8.1.7"
 ruff = "^0.4.5"
 pyright = "^1.1.364"
 sv-ttk = "^2.6.0"
+pytest = "^8.2.1"
 
 [build-system]
 requires = ["poetry-core"]
