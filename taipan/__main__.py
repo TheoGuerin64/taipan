@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from . import compiler
-from .exceptions import TaipanException
+from .exceptions import TaipanError
 
 
 @click.group()
@@ -24,7 +24,7 @@ def build(input: Path, output: Path | None, c: bool) -> None:
             compiler.compile_to_c(input, output)
         else:
             compiler.compile(input, output)
-    except TaipanException as error:
+    except TaipanError as error:
         raise click.ClickException(str(error))
 
 
@@ -34,7 +34,7 @@ def build(input: Path, output: Path | None, c: bool) -> None:
 def run(input: Path, args: tuple[str]) -> None:
     try:
         compiler.run(input, args)
-    except TaipanException as error:
+    except TaipanError as error:
         raise click.ClickException(str(error))
 
 

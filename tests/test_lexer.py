@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from taipan.exceptions import FileError, SyntaxError
+from taipan.exceptions import TaipanFileError, TaipanSyntaxError
 from taipan.lexer import Lexer, Token, TokenKind
 
 
@@ -11,7 +11,7 @@ class Tests:
         file = tmp_path / "file.txt"
         file.touch()
 
-        with pytest.raises(FileError) as e_info:
+        with pytest.raises(TaipanFileError) as e_info:
             Lexer(file)
             assert e_info.value.path == file
 
@@ -20,17 +20,17 @@ class Tests:
         file.touch()
         file.chmod(0o000)
 
-        with pytest.raises(FileError):
+        with pytest.raises(TaipanFileError):
             Lexer(file)
 
     def test_missing_file(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
 
-        with pytest.raises(FileError):
+        with pytest.raises(TaipanFileError):
             Lexer(file)
 
     def test_folder(self, tmp_path: Path) -> None:
-        with pytest.raises(FileError):
+        with pytest.raises(TaipanFileError):
             Lexer(tmp_path)
 
     def test_valid_file(self, tmp_path: Path) -> None:
@@ -68,7 +68,7 @@ class Tests:
         file.write_text('"string')
 
         lexer = Lexer(file)
-        with pytest.raises(SyntaxError):
+        with pytest.raises(TaipanSyntaxError):
             lexer.next_token()
 
     def test_valid_string(self, tmp_path: Path) -> None:
@@ -85,7 +85,7 @@ class Tests:
         file.write_text(".")
 
         lexer = Lexer(file)
-        with pytest.raises(SyntaxError):
+        with pytest.raises(TaipanSyntaxError):
             lexer.next_token()
 
     def test_left_dot(self, tmp_path: Path) -> None:
@@ -149,7 +149,7 @@ class Tests:
         file.write_text("@")
 
         lexer = Lexer(file)
-        with pytest.raises(SyntaxError):
+        with pytest.raises(TaipanSyntaxError):
             lexer.next_token()
 
     def test_two_char_token(self, tmp_path: Path) -> None:

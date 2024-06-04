@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 
-from .exceptions import FileError, SyntaxError
+from .exceptions import TaipanFileError, TaipanSyntaxError
 
 
 class TokenKind(Enum):
@@ -41,13 +41,13 @@ class Token:
 class Lexer:
     def __init__(self, input: Path) -> None:
         if input.suffix != ".tp":
-            raise FileError(input, "File must have a .tp extension")
+            raise TaipanFileError(input, "File must have a .tp extension")
 
         try:
             with input.open() as file:
                 self.source = file.read()
         except OSError as error:
-            raise FileError(input, error.strerror)
+            raise TaipanFileError(input, error.strerror)
 
         self.source += "\n"
         self.index = -1
@@ -81,7 +81,7 @@ class Lexer:
         start = self.index
         while self.char != '"':
             if self.char == "\n":
-                raise SyntaxError("Missing closing quote")
+                raise TaipanSyntaxError("Missing closing quote")
             self.read_char()
         return Token(kind=TokenKind.STRING, value=self.source[start : self.index])
 
@@ -98,7 +98,7 @@ class Lexer:
         try:
             value = float(raw_value)
         except ValueError:
-            raise SyntaxError(f"Invalid number: {raw_value!r}")
+            raise TaipanSyntaxError(f"Invalid number: {raw_value!r}")
 
         return Token(kind=TokenKind.NUMBER, value=value)
 
@@ -157,7 +157,7 @@ class Lexer:
                     case _:
                         token = Token(kind=TokenKind.IDENTIFIER, value=identifier)
             case other:
-                raise SyntaxError(f"Got unexpected token: {other!r}")
+                raise TaipanSyntaxError(f"Got unexpected token: {other!r}")
 
         self.read_char()
         return token

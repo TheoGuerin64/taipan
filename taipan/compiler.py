@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .ast import AST
 from .emitter import Emitter
-from .exceptions import FileError, TaipanException
+from .exceptions import TaipanCompilationError, TaipanFileError
 from .lexer import Lexer
 from .parser import Parser
 
@@ -13,7 +13,7 @@ from .parser import Parser
 def find_gcc() -> Path:
     gcc = shutil.which("gcc")
     if gcc is None:
-        raise TaipanException("gcc not found in PATH")
+        raise TaipanCompilationError("gcc not found in PATH")
     return Path(gcc)
 
 
@@ -66,9 +66,7 @@ def compile(input: Path, output: Path) -> None:
         try:
             output.write_bytes(temp_output.read_bytes())
         except OSError as error:
-            raise FileError(output, error.strerror)
-
-    output.chmod(0o755)
+            raise TaipanFileError(output, error.strerror)
 
 
 def run(input: Path, args: tuple[str]) -> int:
