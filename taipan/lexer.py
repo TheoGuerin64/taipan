@@ -62,7 +62,7 @@ class Lexer:
         return self.source[self.index + 1] if self.index < len(self.source) else "\0"
 
     def skip_whitespaces(self) -> None:
-        while self.char.isspace():
+        while self.char == " " or self.char == "\t":
             self.read_char()
 
     def skip_comments(self) -> None:
