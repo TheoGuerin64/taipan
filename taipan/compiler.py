@@ -51,7 +51,7 @@ def generate_executable(temp_dir: str, gcc: Path, source: Path) -> Path:
 
 def compile_to_c(input: Path, output: Path) -> None:
     code = generate_c_code(input)
-    output.write_text(code)
+    output.with_suffix(".c").write_text(code)
 
 
 def compile(input: Path, output: Path) -> None:
