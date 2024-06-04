@@ -80,7 +80,7 @@ class Lexer:
         self.read_char()
         start = self.index
         while self.char != '"':
-            if self.char == "\r" or self.char == "\n":
+            if self.char == "\n":
                 raise SyntaxError("Missing closing quote")
             self.read_char()
         return Token(kind=TokenKind.STRING, value=self.source[start : self.index])
