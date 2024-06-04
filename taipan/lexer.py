@@ -104,7 +104,7 @@ class Lexer:
 
     def read_identifier(self) -> str:
         start = self.index
-        while self.peek_char().isalnum():
+        while self.peek_char().isalnum() or self.peek_char() == "_":
             self.read_char()
         return self.source[start : self.index + 1]
 
@@ -143,7 +143,7 @@ class Lexer:
                 token = self.get_string_token()
             case char if char.isdigit():
                 token = self.get_number_token()
-            case char if char.isalpha():
+            case char if char.isalpha() or char == "_":
                 identifier = self.read_identifier()
                 match identifier:
                     case "if":
