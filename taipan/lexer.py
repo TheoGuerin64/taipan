@@ -141,7 +141,7 @@ class Lexer:
                 token = self.get_two_char_token("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER)
             case '"':
                 token = self.get_string_token()
-            case char if char.isdigit():
+            case char if char.isdigit() or char == ".":
                 token = self.get_number_token()
             case char if char.isalpha() or char == "_":
                 identifier = self.read_identifier()
