@@ -41,14 +41,7 @@ class Parser:
         self.peek_token = self.lexer.next_token()
 
     def program(self) -> Program:
-        while self.current_token.kind == TokenKind.NEWLINE:
-            self.next_token()
-
-        block = Block()
-        while self.current_token.kind != TokenKind.EOF:
-            block.statements.append(self.statement())
-
-        return Program(block=block)
+        return Program(block=self.block())
 
     def comparaison(self) -> Comparaison:
         left = self.expression()
@@ -112,10 +105,16 @@ class Parser:
 
     def block(self) -> Block:
         block = Block()
+
         self.match_token(TokenKind.OPEN_BRACE)
+        while self.current_token.kind == TokenKind.NEWLINE:
+            self.next_token()
+
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
             block.statements.append(self.statement())
+            self.nl()
         self.next_token()
+
         return block
 
     def print_statement(self) -> Print:
