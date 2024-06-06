@@ -158,4 +158,4 @@ class Assignment(Node):
 
 @dataclass
 class AST:
-    root: Node
+    root: Program
