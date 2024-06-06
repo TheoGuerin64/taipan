@@ -43,6 +43,9 @@ class Parser:
         self.peek_token = self.lexer.next_token()
 
     def program(self) -> Program:
+        while self.current_token.kind == TokenKind.NEWLINE:
+            self.next_token()
+
         return Program(block=self.block())
 
     def comparaison(self) -> Comparaison:
