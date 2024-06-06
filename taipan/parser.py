@@ -119,17 +119,6 @@ class Parser:
 
         return block
 
-    def print_statement(self) -> Print:
-        self.next_token()
-        match self.current_token.kind:
-            case TokenKind.STRING:
-                assert isinstance(self.current_token.value, str)
-                value = String(value=self.current_token.value)
-                self.next_token()
-            case _:
-                value = self.expression()
-        return Print(value=value)
-
     def if_statement(self) -> If:
         self.next_token()
         return If(condition=self.comparaison(), block=self.block())
@@ -143,6 +132,17 @@ class Parser:
         node = Input(identifier=self.identifier())
         return node
 
+    def print_statement(self) -> Print:
+        self.next_token()
+        match self.current_token.kind:
+            case TokenKind.STRING:
+                assert isinstance(self.current_token.value, str)
+                value = String(value=self.current_token.value)
+                self.next_token()
+            case _:
+                value = self.expression()
+        return Print(value=value)
+
     def assignment_statement(self) -> Assignment:
         identifier = self.identifier()
         self.match_token(TokenKind.ASSIGNMENT)
@@ -150,14 +150,14 @@ class Parser:
 
     def statement(self) -> Statement:
         match self.current_token.kind:
-            case TokenKind.PRINT:
-                return self.print_statement()
             case TokenKind.IF:
                 return self.if_statement()
             case TokenKind.WHILE:
                 return self.while_statement()
             case TokenKind.INPUT:
                 return self.input_statement()
+            case TokenKind.PRINT:
+                return self.print_statement()
             case TokenKind.IDENTIFIER:
                 return self.assignment_statement()
             case _:
