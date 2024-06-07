@@ -9,27 +9,34 @@ type Expression = Identifier | Number | BinaryExpression | UnaryExpression
 type Statement = If | While | Input | Print | Assignment
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Node:
-    pass
+    def __repr__(self) -> str:
+        attributes = [
+            f"{key}={value!r}"
+            for key, value in self.__dict__.items()
+            if not isinstance(value, Node)
+            if not isinstance(value, list) or not any(isinstance(item, Node) for item in value)
+        ]
+        return f"{self.__class__.__name__}({', '.join(attributes)})"
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Identifier(Node):
     name: str
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Literal[T](Node):
     value: T
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Number(Literal[float]):
     pass
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class String(Literal[str]):
     pass
 
@@ -60,10 +67,10 @@ class ArithmeticOperator(StrEnum):
                 return ArithmeticOperator.MODULO
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class BinaryExpression(Node):
-    left: Expression = field(repr=False)
-    right: Expression = field(repr=False)
+    left: Expression
+    right: Expression
     operator: ArithmeticOperator
 
 
@@ -80,9 +87,9 @@ class UnaryOperator(StrEnum):
                 return UnaryOperator.NEGATIVE
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class UnaryExpression(Node):
-    value: Identifier | Number = field(repr=False)
+    value: Identifier | Number
     operator: UnaryOperator
 
 
@@ -111,49 +118,49 @@ class ComparaisonOperator(StrEnum):
                 return ComparaisonOperator.GREATER_EQUAL
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Comparaison(Node):
-    left: Expression | Comparaison = field(repr=False)
-    right: Expression | Comparaison = field(repr=False)
+    left: Expression | Comparaison
+    right: Expression | Comparaison
     operator: ComparaisonOperator
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Block(Node):
-    statements: list[Statement] = field(default_factory=list, repr=False)
+    statements: list[Statement] = field(default_factory=list)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Program(Node):
-    block: Block = field(default_factory=Block, repr=False)
+    block: Block = field(default_factory=Block)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class If(Node):
-    condition: Comparaison = field(repr=False)
-    block: Block = field(default_factory=Block, repr=False)
+    condition: Comparaison
+    block: Block = field(default_factory=Block)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class While(Node):
-    condition: Comparaison = field(repr=False)
-    block: Block = field(default_factory=Block, repr=False)
+    condition: Comparaison
+    block: Block = field(default_factory=Block)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Input(Node):
-    identifier: Identifier = field(repr=False)
+    identifier: Identifier
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Print(Node):
-    value: Expression | String = field(repr=False)
+    value: Expression | String
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Assignment(Node):
-    identifier: Identifier = field(repr=False)
-    expression: Expression = field(repr=False)
+    identifier: Identifier
+    expression: Expression
 
 
 @dataclass
