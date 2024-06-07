@@ -32,7 +32,7 @@ class TokenKind(Enum):
     GREATER_EQUAL = auto()
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Token:
     kind: TokenKind
     value: str | float | None = None
@@ -73,17 +73,19 @@ class Lexer:
     def get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
         if self.peek_char() == next:
             self.read_char()
-            return Token(kind=if_next)
-        return Token(kind=otherwise)
+            return Token(if_next)
+        return Token(otherwise)
 
     def get_string_token(self) -> Token:
         self.read_char()
+
         start = self.index
         while self.char != '"':
             if self.char == "\n":
                 raise TaipanSyntaxError("Missing closing quote")
             self.read_char()
-        return Token(kind=TokenKind.STRING, value=self.source[start : self.index])
+
+        return Token(TokenKind.STRING, self.source[start : self.index])
 
     def get_number_token(self) -> Token:
         start = self.index
@@ -94,13 +96,7 @@ class Lexer:
             while self.peek_char().isdigit():
                 self.read_char()
 
-        raw_value = self.source[start : self.index + 1]
-        try:
-            value = float(raw_value)
-        except ValueError:
-            raise TaipanSyntaxError(f"Invalid number: {raw_value!r}")
-
-        return Token(kind=TokenKind.NUMBER, value=value)
+        return Token(TokenKind.NUMBER, float(self.source[start : self.index + 1]))
 
     def read_identifier(self) -> str:
         start = self.index
@@ -114,23 +110,23 @@ class Lexer:
 
         match self.char:
             case "\0":
-                token = Token(kind=TokenKind.EOF)
+                token = Token(TokenKind.EOF)
             case "\n":
-                token = Token(kind=TokenKind.NEWLINE)
+                token = Token(TokenKind.NEWLINE)
             case "+":
-                token = Token(kind=TokenKind.PLUS)
+                token = Token(TokenKind.PLUS)
             case "-":
-                token = Token(kind=TokenKind.MINUS)
+                token = Token(TokenKind.MINUS)
             case "*":
-                token = Token(kind=TokenKind.MULTIPLICATION)
+                token = Token(TokenKind.MULTIPLICATION)
             case "/":
-                token = Token(kind=TokenKind.DIVISION)
+                token = Token(TokenKind.DIVISION)
             case "%":
-                token = Token(kind=TokenKind.MODULO)
+                token = Token(TokenKind.MODULO)
             case "{":
-                token = Token(kind=TokenKind.OPEN_BRACE)
+                token = Token(TokenKind.OPEN_BRACE)
             case "}":
-                token = Token(kind=TokenKind.CLOSE_BRACE)
+                token = Token(TokenKind.CLOSE_BRACE)
             case "=":
                 token = self.get_two_char_token("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT)
             case "!":
@@ -147,15 +143,15 @@ class Lexer:
                 identifier = self.read_identifier()
                 match identifier:
                     case "if":
-                        token = Token(kind=TokenKind.IF)
+                        token = Token(TokenKind.IF)
                     case "while":
-                        token = Token(kind=TokenKind.WHILE)
+                        token = Token(TokenKind.WHILE)
                     case "input":
-                        token = Token(kind=TokenKind.INPUT)
+                        token = Token(TokenKind.INPUT)
                     case "print":
-                        token = Token(kind=TokenKind.PRINT)
+                        token = Token(TokenKind.PRINT)
                     case _:
-                        token = Token(kind=TokenKind.IDENTIFIER, value=identifier)
+                        token = Token(TokenKind.IDENTIFIER, identifier)
             case other:
                 raise TaipanSyntaxError(f"Got unexpected token: {other!r}")
 
