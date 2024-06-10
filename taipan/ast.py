@@ -11,14 +11,30 @@ type Statement = If | While | Input | Print | Assignment
 
 @dataclass(kw_only=True, repr=False)
 class Node:
+    parent: Node | None = None
+
+    def __setattr__(self, name: str, value) -> None:
+        if name != "parent":
+            match value:
+                case Node():
+                    value.parent = self
+                case NodeList():
+                    for node in value:
+                        node.parent = self
+
+        super().__setattr__(name, value)
+
     def __repr__(self) -> str:
         attributes = [
             f"{key}={value!r}"
             for key, value in self.__dict__.items()
-            if not isinstance(value, Node)
-            if not isinstance(value, list) or not any(isinstance(item, Node) for item in value)
+            if key != "parent" and not isinstance(value, (Node, NodeList))
         ]
         return f"{self.__class__.__name__}({', '.join(attributes)})"
+
+
+class NodeList[T: Node](list[T]):
+    pass
 
 
 @dataclass(kw_only=True, repr=False)
@@ -127,7 +143,15 @@ class Comparaison(Node):
 
 @dataclass(kw_only=True, repr=False)
 class Block(Node):
-    statements: list[Statement] = field(default_factory=list)
+    _statements: NodeList[Statement] = field(default_factory=NodeList)
+
+    @property
+    def statements(self) -> tuple[Statement, ...]:
+        return tuple(self._statements)
+
+    def add_statement(self, statement: Statement) -> None:
+        self._statements.append(statement)
+        statement.parent = self
 
 
 @dataclass(kw_only=True, repr=False)

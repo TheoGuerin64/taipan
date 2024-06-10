@@ -116,7 +116,7 @@ class Parser:
             self.next_token()
 
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
-            block.statements.append(self.statement())
+            block.add_statement(self.statement())
             self.nl()
         self.next_token()
 
