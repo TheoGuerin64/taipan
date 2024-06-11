@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from .lexer import Token, TokenKind
+from .symbol_table import SymbolTable
 
 type Expression = Identifier | Number | BinaryExpression | UnaryExpression
 type Statement = If | While | Input | Print | Assignment
@@ -11,19 +12,6 @@ type Statement = If | While | Input | Print | Assignment
 
 @dataclass(kw_only=True, repr=False)
 class Node:
-    parent: Node | None = None
-
-    def __setattr__(self, name: str, value) -> None:
-        if name != "parent":
-            match value:
-                case Node():
-                    value.parent = self
-                case NodeList():
-                    for node in value:
-                        node.parent = self
-
-        super().__setattr__(name, value)
-
     def __repr__(self) -> str:
         attributes = [
             f"{key}={value!r}"
@@ -143,15 +131,8 @@ class Comparaison(Node):
 
 @dataclass(kw_only=True, repr=False)
 class Block(Node):
-    _statements: NodeList[Statement] = field(default_factory=NodeList)
-
-    @property
-    def statements(self) -> tuple[Statement, ...]:
-        return tuple(self._statements)
-
-    def add_statement(self, statement: Statement) -> None:
-        self._statements.append(statement)
-        statement.parent = self
+    statements: NodeList[Statement] = field(default_factory=NodeList)
+    symbol_table: SymbolTable = field(default_factory=SymbolTable)
 
 
 @dataclass(kw_only=True, repr=False)

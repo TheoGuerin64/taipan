@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from taipan.exceptions import TaipanSyntaxError
-
 from .ast import (
     AST,
     ArithmeticOperator,
@@ -22,7 +20,9 @@ from .ast import (
     UnaryOperator,
     While,
 )
+from .exceptions import TaipanSyntaxError
 from .lexer import Lexer, Token, TokenKind
+from .symbol_table import SymbolTable
 
 
 class Parser:
@@ -30,6 +30,7 @@ class Parser:
         self.lexer = lexer
         self.current_token = Token(kind=TokenKind.EOF)
         self.peek_token = Token(kind=TokenKind.EOF)
+        self.symbol_tables: list[SymbolTable] = []
         self.next_token()
         self.next_token()
 
@@ -93,9 +94,17 @@ class Parser:
         self.next_token()
         return node
 
-    def identifier(self) -> Identifier:
+    def identifier(self, declaration: bool = False) -> Identifier:
         assert isinstance(self.current_token.value, str)
         node = Identifier(name=self.current_token.value)
+
+        if declaration:
+            for symbol_table in self.symbol_tables:
+                if node.name in symbol_table:
+                    break
+            else:
+                self.symbol_tables[-1].add(node.name)
+
         self.next_token()
         return node
 
@@ -110,16 +119,18 @@ class Parser:
 
     def block(self) -> Block:
         block = Block()
+        self.symbol_tables.append(block.symbol_table)
 
         self.match_token(TokenKind.OPEN_BRACE)
         while self.current_token.kind == TokenKind.NEWLINE:
             self.next_token()
 
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
-            block.add_statement(self.statement())
+            block.statements.append(self.statement())
             self.nl()
         self.next_token()
 
+        self.symbol_tables.pop()
         return block
 
     def if_statement(self) -> If:
@@ -132,7 +143,7 @@ class Parser:
 
     def input_statement(self) -> Input:
         self.next_token()
-        node = Input(identifier=self.identifier())
+        node = Input(identifier=self.identifier(True))
         return node
 
     def print_statement(self) -> Print:
@@ -147,7 +158,7 @@ class Parser:
         return Print(value=value)
 
     def assignment_statement(self) -> Assignment:
-        identifier = self.identifier()
+        identifier = self.identifier(True)
         self.match_token(TokenKind.ASSIGNMENT)
         return Assignment(identifier=identifier, expression=self.expression())
 

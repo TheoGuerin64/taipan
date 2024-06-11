@@ -19,17 +19,17 @@ from .ast import (
 class Emitter:
     def __init__(self) -> None:
         self.libraries: set[str] = set()
-        self.variables: set[str] = set()
         self.code = ""
 
     def emit(self, node: Node) -> None:
         match node:
             case Program():
                 self.emit(node.block)
-                self.emit_variables()
                 self.emit_main()
                 self.emit_header()
             case Block():
+                if node.symbol_table:
+                    self.code += "double " + ", ".join(node.symbol_table) + ";"
                 for statement in node.statements:
                     self.emit(statement)
             case If():
@@ -78,7 +78,6 @@ class Emitter:
                 self.code += node.operator.value
                 self.emit(node.right)
             case Identifier():
-                self.variables.add(node.name)
                 self.code += node.name
             case Number():
                 self.code += str(node.value)
@@ -86,17 +85,6 @@ class Emitter:
                 self.code += f'"{node.value}"'
             case _:
                 assert False, node
-
-    def emit_variables(self) -> None:
-        variables = ""
-        if self.variables:
-            variables += "double "
-            for index, variable in enumerate(self.variables):
-                if index > 0:
-                    variables += ","
-                variables += variable
-            variables += ";"
-        self.code = variables + self.code
 
     def emit_main(self) -> None:
         self.code = f"int main(){{{self.code}return 0;}}"
