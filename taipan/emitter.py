@@ -3,6 +3,7 @@ from .ast import (
     BinaryExpression,
     Block,
     Comparaison,
+    Declaration,
     Identifier,
     If,
     Input,
@@ -28,8 +29,6 @@ class Emitter:
                 self.emit_main()
                 self.emit_header()
             case Block():
-                if node.symbol_table:
-                    self.code += "double " + ", ".join(node.symbol_table) + ";"
                 for statement in node.statements:
                     self.emit(statement)
             case If():
@@ -61,6 +60,15 @@ class Emitter:
                 self.code += f'printf("{format}\\n",'
                 self.emit(node.value)
                 self.code += ");"
+            case Declaration():
+                self.code += "double "
+                self.emit(node.identifier)
+                self.code += "="
+                if node.expression:
+                    self.emit(node.expression)
+                else:
+                    self.code += "0.0"
+                self.code += ";"
             case Assignment():
                 self.emit(node.identifier)
                 self.code += "="

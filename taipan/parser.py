@@ -1,3 +1,4 @@
+from collections import deque
 from pathlib import Path
 
 from .ast import (
@@ -8,6 +9,7 @@ from .ast import (
     Block,
     Comparaison,
     ComparaisonOperator,
+    Declaration,
     Identifier,
     If,
     Input,
@@ -30,7 +32,7 @@ class Parser:
         self.lexer = lexer
         self.current_token = Token(kind=TokenKind.EOF)
         self.peek_token = Token(kind=TokenKind.EOF)
-        self.symbol_tables: list[SymbolTable] = []
+        self.symbol_tables: deque[SymbolTable] = deque()
         self.next_token()
         self.next_token()
 
@@ -94,17 +96,9 @@ class Parser:
         self.next_token()
         return node
 
-    def identifier(self, declaration: bool = False) -> Identifier:
+    def identifier(self) -> Identifier:
         assert isinstance(self.current_token.value, str)
         node = Identifier(name=self.current_token.value)
-
-        if declaration:
-            for symbol_table in self.symbol_tables:
-                if node.name in symbol_table:
-                    break
-            else:
-                self.symbol_tables[-1].add(node.name)
-
         self.next_token()
         return node
 
@@ -143,7 +137,7 @@ class Parser:
 
     def input_statement(self) -> Input:
         self.next_token()
-        node = Input(identifier=self.identifier(True))
+        node = Input(identifier=self.identifier())
         return node
 
     def print_statement(self) -> Print:
@@ -157,8 +151,22 @@ class Parser:
                 value = self.expression()
         return Print(value=value)
 
+    def declaration_statement(self) -> Declaration:
+        self.next_token()
+
+        identifier = self.identifier()
+        self.symbol_tables[-1].add(identifier.name)
+
+        if self.current_token.kind == TokenKind.ASSIGNMENT:
+            self.next_token()
+            expression = self.expression()
+        else:
+            expression = None
+
+        return Declaration(identifier=identifier, expression=expression)
+
     def assignment_statement(self) -> Assignment:
-        identifier = self.identifier(True)
+        identifier = self.identifier()
         self.match_token(TokenKind.ASSIGNMENT)
         return Assignment(identifier=identifier, expression=self.expression())
 
@@ -172,6 +180,8 @@ class Parser:
                 return self.input_statement()
             case TokenKind.PRINT:
                 return self.print_statement()
+            case TokenKind.DECLARATION:
+                return self.declaration_statement()
             case TokenKind.IDENTIFIER:
                 return self.assignment_statement()
             case _:

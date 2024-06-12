@@ -7,7 +7,7 @@ from .lexer import Token, TokenKind
 from .symbol_table import SymbolTable
 
 type Expression = Identifier | Number | BinaryExpression | UnaryExpression
-type Statement = If | While | Input | Print | Assignment
+type Statement = If | While | Input | Print | Declaration | Assignment
 
 
 @dataclass(kw_only=True, repr=False)
@@ -160,6 +160,12 @@ class Input(Node):
 @dataclass(kw_only=True, repr=False)
 class Print(Node):
     value: Expression | String
+
+
+@dataclass(kw_only=True, repr=False)
+class Declaration(Node):
+    identifier: Identifier
+    expression: Expression | None
 
 
 @dataclass(kw_only=True, repr=False)

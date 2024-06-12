@@ -17,6 +17,7 @@ class TokenKind(Enum):
     WHILE = auto()
     INPUT = auto()
     PRINT = auto()
+    DECLARATION = auto()
     ASSIGNMENT = auto()
     PLUS = auto()
     MINUS = auto()
@@ -150,6 +151,8 @@ class Lexer:
                         token = Token(TokenKind.INPUT)
                     case "print":
                         token = Token(TokenKind.PRINT)
+                    case "let":
+                        token = Token(TokenKind.DECLARATION)
                     case _:
                         token = Token(TokenKind.IDENTIFIER, identifier)
             case other:
