@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 
@@ -13,8 +15,8 @@ class TaipanFileError(TaipanError):
 
 
 class TaipanSyntaxError(TaipanError):
-    def __init__(self, message: str) -> None:
-        super().__init__(f"SyntaxError: {message}")
+    def __init__(self, file: Path, line: int, column: int, message: str) -> None:
+        super().__init__(f"{file}:{line}:{column}: SyntaxError: {message}")
 
 
 class TaipanCompilationError(TaipanError):
