@@ -6,17 +6,18 @@ authors = ["Theo Guerin"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-click = "^8"
+click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0"
-pyright = "^1"
-pytest = "^8"
+ruff = "^0.5.5"
+pyright = "^1.1.364"
+pytest = "^8.2.1"
+pre-commit = "^3.7.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-extend-select = ["I"]
+lint.extend-select = ["I"]
 line-length = 100
