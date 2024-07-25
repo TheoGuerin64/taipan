@@ -11,14 +11,14 @@ from .parser import Parser
 COMPILER_OPTIONS = ["-Ofast"]
 
 
-def find_clang() -> Path:
+def _find_clang() -> Path:
     clang = shutil.which("clang")
     if clang is None:
         raise TaipanCompilationError("clang not found in PATH")
     return Path(clang)
 
 
-def find_clang_format() -> Path | None:
+def _find_clang_format() -> Path | None:
     clang_format = shutil.which("clang-format")
     if clang_format is None:
         print("clang-format not found in PATH")
@@ -26,7 +26,7 @@ def find_clang_format() -> Path | None:
     return Path(clang_format)
 
 
-def generate_c_code(input: Path) -> str:
+def _generate_c_code(input: Path) -> str:
     parser = Parser(input)
     ast = AST(parser.program())
 
@@ -35,7 +35,7 @@ def generate_c_code(input: Path) -> str:
     return emitter.code
 
 
-def save_code_to_tempfile(temp_dir: str, code: str) -> Path:
+def _save_code_to_tempfile(temp_dir: str, code: str) -> Path:
     temp = tempfile.NamedTemporaryFile("w+t", dir=temp_dir, suffix=".c", delete=False)
     temp.write(code)
     temp.close()
@@ -43,7 +43,7 @@ def save_code_to_tempfile(temp_dir: str, code: str) -> Path:
     return Path(temp.name)
 
 
-def generate_executable(temp_dir: str, clang: Path, source: Path) -> Path:
+def _generate_executable(temp_dir: str, clang: Path, source: Path) -> Path:
     temp = tempfile.NamedTemporaryFile("w+b", dir=temp_dir, suffix=".c", delete=False)
     temp.close()
 
@@ -58,22 +58,22 @@ def generate_executable(temp_dir: str, clang: Path, source: Path) -> Path:
 
 
 def compile_to_c(input: Path, output: Path) -> None:
-    code = generate_c_code(input)
+    code = _generate_c_code(input)
     file = output.with_suffix(".c")
     file.write_text(code)
 
-    clang_format = find_clang_format()
+    clang_format = _find_clang_format()
     if clang_format is not None:
         subprocess.run([clang_format, "-i", file])
 
 
 def compile(input: Path, output: Path) -> None:
-    clang = find_clang()
-    code = generate_c_code(input)
+    clang = _find_clang()
+    code = _generate_c_code(input)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_source = save_code_to_tempfile(temp_dir, code)
-        temp_output = generate_executable(temp_dir, clang, temp_source)
+        temp_source = _save_code_to_tempfile(temp_dir, code)
+        temp_output = _generate_executable(temp_dir, clang, temp_source)
 
         output.touch()
         try:
@@ -83,11 +83,11 @@ def compile(input: Path, output: Path) -> None:
 
 
 def run(input: Path, args: tuple[str]) -> int:
-    clang = find_clang()
-    code = generate_c_code(input)
+    clang = _find_clang()
+    code = _generate_c_code(input)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_source = save_code_to_tempfile(temp_dir, code)
-        temp_output = generate_executable(temp_dir, clang, temp_source)
+        temp_source = _save_code_to_tempfile(temp_dir, code)
+        temp_output = _generate_executable(temp_dir, clang, temp_source)
 
         return subprocess.run([temp_output, *args]).returncode
