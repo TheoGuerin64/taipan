@@ -97,7 +97,11 @@ class Lexer:
             while self.peek_char().isdigit():
                 self.read_char()
 
-        return Token(TokenKind.NUMBER, float(self.source[start : self.index + 1]))
+        value = self.source[start : self.index + 1]
+        if value == ".":
+            raise TaipanSyntaxError(self.input, "Invalid number")
+
+        return Token(TokenKind.NUMBER, float(value))
 
     def read_identifier(self) -> str:
         start = self.index
