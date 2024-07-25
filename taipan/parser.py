@@ -28,8 +28,8 @@ from .symbol_table import SymbolTable
 
 
 class Parser:
-    def __init__(self, lexer: Lexer) -> None:
-        self.lexer = lexer
+    def __init__(self, input: Path) -> None:
+        self.lexer = Lexer(input)
         self.current_token = Token(kind=TokenKind.EOF)
         self.peek_token = Token(kind=TokenKind.EOF)
         self.symbol_tables: deque[SymbolTable] = deque()

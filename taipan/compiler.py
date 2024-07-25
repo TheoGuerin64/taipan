@@ -6,7 +6,6 @@ from pathlib import Path
 from .ast import AST
 from .emitter import Emitter
 from .exceptions import TaipanCompilationError, TaipanFileError
-from .lexer import Lexer
 from .parser import Parser
 
 
@@ -18,8 +17,7 @@ def find_gcc() -> Path:
 
 
 def generate_c_code(input: Path) -> str:
-    lexer = Lexer(input)
-    parser = Parser(lexer)
+    parser = Parser(input)
     ast = AST(parser.program())
 
     emitter = Emitter()
