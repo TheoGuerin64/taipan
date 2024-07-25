@@ -8,6 +8,8 @@ from .emitter import Emitter
 from .exceptions import TaipanCompilationError, TaipanFileError
 from .parser import Parser
 
+COMPILER_OPTIONS = ["-Ofast"]
+
 
 def find_clang() -> Path:
     clang = shutil.which("clang")
@@ -38,7 +40,7 @@ def generate_executable(temp_dir: str, clang: Path, source: Path) -> Path:
     temp.close()
 
     result = subprocess.run(
-        [clang, "-o", temp.name, source],
+        [clang, *COMPILER_OPTIONS, "-o", temp.name, source],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
     )
