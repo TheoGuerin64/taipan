@@ -18,6 +18,14 @@ def find_clang() -> Path:
     return Path(clang)
 
 
+def find_clang_format() -> Path | None:
+    clang_format = shutil.which("clang-format")
+    if clang_format is None:
+        print("clang-format not found in PATH")
+        return None
+    return Path(clang_format)
+
+
 def generate_c_code(input: Path) -> str:
     parser = Parser(input)
     ast = AST(parser.program())
@@ -51,7 +59,12 @@ def generate_executable(temp_dir: str, clang: Path, source: Path) -> Path:
 
 def compile_to_c(input: Path, output: Path) -> None:
     code = generate_c_code(input)
-    output.with_suffix(".c").write_text(code)
+    file = output.with_suffix(".c")
+    file.write_text(code)
+
+    clang_format = find_clang_format()
+    if clang_format is not None:
+        subprocess.run([clang_format, "-i", file])
 
 
 def compile(input: Path, output: Path) -> None:
