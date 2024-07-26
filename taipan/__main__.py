@@ -33,7 +33,7 @@ def build(input: Path, output: Path | None, c: bool) -> None:
 @click.argument("args", type=click.STRING, nargs=-1)
 def run(input: Path, args: tuple[str]) -> None:
     try:
-        compiler.run(input, args)
+        compiler.run(input, input.with_suffix("").name, args)
     except TaipanError as error:
         raise click.ClickException(str(error))
 

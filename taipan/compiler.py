@@ -1,14 +1,15 @@
+import os
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 from .ast import AST
 from .emitter import Emitter
-from .exceptions import TaipanCompilationError, TaipanFileError
+from .exceptions import TaipanCompilationError
 from .parser import Parser
 
 COMPILER_OPTIONS = ["-Ofast"]
+TEMP_DIR = Path("tmp")
 
 
 def _find_clang() -> Path:
@@ -26,6 +27,13 @@ def _find_clang_format() -> Path | None:
     return Path(clang_format)
 
 
+def _ensure_temp_directory() -> None:
+    if not TEMP_DIR.exists():
+        TEMP_DIR.mkdir()
+    elif not TEMP_DIR.is_dir():
+        raise TaipanCompilationError(f"{TEMP_DIR} is not a directory")
+
+
 def _generate_c_code(input: Path) -> str:
     parser = Parser(input)
     ast = AST(parser.program())
@@ -35,26 +43,15 @@ def _generate_c_code(input: Path) -> str:
     return emitter.code
 
 
-def _save_code_to_tempfile(temp_dir: str, code: str) -> Path:
-    temp = tempfile.NamedTemporaryFile("w+t", dir=temp_dir, suffix=".c", delete=False)
-    temp.write(code)
-    temp.close()
-
-    return Path(temp.name)
-
-
-def _generate_executable(temp_dir: str, clang: Path, source: Path) -> Path:
-    temp = tempfile.NamedTemporaryFile("w+b", dir=temp_dir, suffix=".c", delete=False)
-    temp.close()
-
+def _clang_compile(code: str, destination: Path) -> None:
+    clang = _find_clang()
     result = subprocess.run(
-        [clang, *COMPILER_OPTIONS, "-o", temp.name, source],
+        [clang, *COMPILER_OPTIONS, "-o", destination, "-xc", "-"],
+        input=code.encode("utf-8"),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
     )
     assert result.returncode == 0, result.stderr.decode("utf-8")
-
-    return Path(temp.name)
 
 
 def compile_to_c(input: Path, output: Path) -> None:
@@ -68,26 +65,15 @@ def compile_to_c(input: Path, output: Path) -> None:
 
 
 def compile(input: Path, output: Path) -> None:
-    clang = _find_clang()
+    code = _generate_c_code(input)
+    _clang_compile(code, output)
+
+
+def run(input: Path, output_name: str, args: tuple[str]) -> int:
     code = _generate_c_code(input)
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_source = _save_code_to_tempfile(temp_dir, code)
-        temp_output = _generate_executable(temp_dir, clang, temp_source)
+    _ensure_temp_directory()
+    temp_output = TEMP_DIR / output_name
 
-        output.touch()
-        try:
-            output.write_bytes(temp_output.read_bytes())
-        except OSError as error:
-            raise TaipanFileError(output, error.strerror)
-
-
-def run(input: Path, args: tuple[str]) -> int:
-    clang = _find_clang()
-    code = _generate_c_code(input)
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_source = _save_code_to_tempfile(temp_dir, code)
-        temp_output = _generate_executable(temp_dir, clang, temp_source)
-
-        return subprocess.run([temp_output, *args]).returncode
+    _clang_compile(code, temp_output)
+    os.execl(temp_output, temp_output, *args)
