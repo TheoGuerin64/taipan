@@ -10,7 +10,7 @@ type Expression = Identifier | Number | BinaryExpression | UnaryExpression
 type Statement = If | While | Input | Print | Declaration | Assignment
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Node:
     def __repr__(self) -> str:
         attributes = [
@@ -25,22 +25,22 @@ class NodeList[T: Node](list[T]):
     pass
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Identifier(Node):
     name: str
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Literal[T](Node):
     value: T
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Number(Literal[float]):
     pass
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class String(Literal[str]):
     pass
 
@@ -71,7 +71,7 @@ class ArithmeticOperator(StrEnum):
                 return ArithmeticOperator.MODULO
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class BinaryExpression(Node):
     left: Expression
     right: Expression
@@ -91,7 +91,7 @@ class UnaryOperator(StrEnum):
                 return UnaryOperator.NEGATIVE
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class UnaryExpression(Node):
     value: Identifier | Number
     operator: UnaryOperator
@@ -122,53 +122,53 @@ class ComparisonOperator(StrEnum):
                 return ComparisonOperator.GREATER_EQUAL
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Comparison(Node):
     left: Expression | Comparison
     right: Expression | Comparison
     operator: ComparisonOperator
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Block(Node):
     statements: NodeList[Statement] = field(default_factory=NodeList)
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Program(Node):
     block: Block = field(default_factory=Block)
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class If(Node):
     condition: Comparison
     block: Block = field(default_factory=Block)
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class While(Node):
     condition: Comparison
     block: Block = field(default_factory=Block)
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Input(Node):
     identifier: Identifier
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Print(Node):
     value: Expression | String
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Declaration(Node):
     identifier: Identifier
     expression: Expression | None
 
 
-@dataclass(kw_only=True, repr=False)
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Assignment(Node):
     identifier: Identifier
     expression: Expression
