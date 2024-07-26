@@ -1,5 +1,3 @@
-import atexit
-import os
 import shutil
 import subprocess
 import tempfile
@@ -70,6 +68,8 @@ def run(input: Path, output_name: str, args: tuple[str]) -> int:
         temp_output = Path(temp_dir) / output_name
         _clang_compile(code, temp_output)
 
-    atexit.register(shutil.rmtree, temp_dir)
+    import atexit
+    import os
 
+    atexit.register(shutil.rmtree, temp_dir)
     os.execl(temp_output, temp_output, *args)
