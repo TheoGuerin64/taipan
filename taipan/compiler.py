@@ -1,6 +1,8 @@
+import atexit
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 from .ast import AST
@@ -9,7 +11,6 @@ from .exceptions import TaipanCompilationError
 from .parser import Parser
 
 COMPILER_OPTIONS = ["-Ofast"]
-TEMP_DIR = Path("tmp")
 
 
 def _find_clang() -> Path:
@@ -25,13 +26,6 @@ def _find_clang_format() -> Path | None:
         print("clang-format not found in PATH")
         return None
     return Path(clang_format)
-
-
-def _ensure_temp_directory() -> None:
-    if not TEMP_DIR.exists():
-        TEMP_DIR.mkdir()
-    elif not TEMP_DIR.is_dir():
-        raise TaipanCompilationError(f"{TEMP_DIR} is not a directory")
 
 
 def _generate_c_code(input: Path) -> str:
@@ -72,8 +66,10 @@ def compile(input: Path, output: Path) -> None:
 def run(input: Path, output_name: str, args: tuple[str]) -> int:
     code = _generate_c_code(input)
 
-    _ensure_temp_directory()
-    temp_output = TEMP_DIR / output_name
+    with tempfile.TemporaryDirectory(delete=False) as temp_dir:
+        temp_output = Path(temp_dir) / output_name
+        _clang_compile(code, temp_output)
 
-    _clang_compile(code, temp_output)
+    atexit.register(shutil.rmtree, temp_dir)
+
     os.execl(temp_output, temp_output, *args)
