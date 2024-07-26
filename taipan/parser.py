@@ -6,8 +6,8 @@ from .ast import (
     Assignment,
     BinaryExpression,
     Block,
-    Comparaison,
-    ComparaisonOperator,
+    Comparison,
+    ComparisonOperator,
     Declaration,
     Identifier,
     If,
@@ -55,25 +55,25 @@ class Parser:
 
         return Program(block=self.block())
 
-    def comparaison(self) -> Comparaison:
+    def comparison(self) -> Comparison:
         left = self.expression()
 
-        operator = ComparaisonOperator.from_token(self.current_token)
+        operator = ComparisonOperator.from_token(self.current_token)
         if operator is None:
             raise TaipanSyntaxError(
                 self.lexer.input,
                 self.current_token.line,
                 self.current_token.column,
-                f"Expected comparaison operator, got {self.current_token.kind}",
+                f"Expected comparison operator, got {self.current_token.kind}",
             )
         self.next_token()
 
         right = self.expression()
 
-        node = Comparaison(left=left, right=right, operator=operator)
-        while operator := ComparaisonOperator.from_token(self.current_token):
+        node = Comparison(left=left, right=right, operator=operator)
+        while operator := ComparisonOperator.from_token(self.current_token):
             right = self.expression()
-            node = Comparaison(left=node, right=right, operator=operator)
+            node = Comparison(left=node, right=right, operator=operator)
             self.next_token()
         return node
 
@@ -143,11 +143,11 @@ class Parser:
 
     def if_statement(self) -> If:
         self.next_token()
-        return If(condition=self.comparaison(), block=self.block())
+        return If(condition=self.comparison(), block=self.block())
 
     def while_statement(self) -> While:
         self.next_token()
-        return While(condition=self.comparaison(), block=self.block())
+        return While(condition=self.comparison(), block=self.block())
 
     def input_statement(self) -> Input:
         self.next_token()

@@ -47,7 +47,7 @@ class String(Literal[str]):
 
 class ArithmeticOperator(StrEnum):
     ADD = "+"
-    SUBSTRACT = "-"
+    SUBTRACT = "-"
     MULTIPLY = "*"
     DIVIDE = "/"
     MODULO = "%"
@@ -58,7 +58,7 @@ class ArithmeticOperator(StrEnum):
             case TokenKind.PLUS:
                 return ArithmeticOperator.ADD
             case TokenKind.MINUS:
-                return ArithmeticOperator.SUBSTRACT
+                return ArithmeticOperator.SUBTRACT
 
     @staticmethod
     def term_from_token(token: Token) -> ArithmeticOperator | None:
@@ -97,7 +97,7 @@ class UnaryExpression(Node):
     operator: UnaryOperator
 
 
-class ComparaisonOperator(StrEnum):
+class ComparisonOperator(StrEnum):
     EQUAL = "=="
     NOT_EQUAL = "!="
     LESS = "<"
@@ -106,27 +106,27 @@ class ComparaisonOperator(StrEnum):
     GREATER_EQUAL = ">="
 
     @staticmethod
-    def from_token(token: Token) -> ComparaisonOperator | None:
+    def from_token(token: Token) -> ComparisonOperator | None:
         match token.kind:
             case TokenKind.EQUAL:
-                return ComparaisonOperator.EQUAL
+                return ComparisonOperator.EQUAL
             case TokenKind.NOT_EQUAL:
-                return ComparaisonOperator.NOT_EQUAL
+                return ComparisonOperator.NOT_EQUAL
             case TokenKind.LESS:
-                return ComparaisonOperator.LESS
+                return ComparisonOperator.LESS
             case TokenKind.LESS_EQUAL:
-                return ComparaisonOperator.LESS_EQUAL
+                return ComparisonOperator.LESS_EQUAL
             case TokenKind.GREATER:
-                return ComparaisonOperator.GREATER
+                return ComparisonOperator.GREATER
             case TokenKind.GREATER_EQUAL:
-                return ComparaisonOperator.GREATER_EQUAL
+                return ComparisonOperator.GREATER_EQUAL
 
 
 @dataclass(kw_only=True, repr=False)
-class Comparaison(Node):
-    left: Expression | Comparaison
-    right: Expression | Comparaison
-    operator: ComparaisonOperator
+class Comparison(Node):
+    left: Expression | Comparison
+    right: Expression | Comparison
+    operator: ComparisonOperator
 
 
 @dataclass(kw_only=True, repr=False)
@@ -142,13 +142,13 @@ class Program(Node):
 
 @dataclass(kw_only=True, repr=False)
 class If(Node):
-    condition: Comparaison
+    condition: Comparison
     block: Block = field(default_factory=Block)
 
 
 @dataclass(kw_only=True, repr=False)
 class While(Node):
-    condition: Comparaison
+    condition: Comparison
     block: Block = field(default_factory=Block)
 
 

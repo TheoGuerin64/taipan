@@ -2,7 +2,7 @@ from .ast import (
     Assignment,
     BinaryExpression,
     Block,
-    Comparaison,
+    Comparison,
     Declaration,
     Identifier,
     If,
@@ -81,7 +81,7 @@ class Emitter:
             case UnaryExpression():
                 self.code += node.operator.value
                 self.emit(node.value)
-            case Comparaison():
+            case Comparison():
                 self.emit(node.left)
                 self.code += node.operator.value
                 self.emit(node.right)
