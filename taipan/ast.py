@@ -135,7 +135,7 @@ class Comparison(Node):
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Block(Node):
     statements: NodeList[Statement] = field(default_factory=NodeList)
-    symbol_table: SymbolTable = field(default_factory=SymbolTable)
+    symbol_table: SymbolTable
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)

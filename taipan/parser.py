@@ -23,7 +23,7 @@ from .ast import (
 )
 from .exceptions import TaipanSyntaxError
 from .lexer import Lexer, Token, TokenKind
-from .symbol_table import SymbolTable
+from .symbol_table import Symbol, SymbolTable
 
 
 class Parser:
@@ -175,8 +175,13 @@ class Parser:
                 )
 
     def block(self) -> Block:
-        block = Block(line=self.current_token.line, column=self.current_token.column)
-        self.symbol_tables.append(block.symbol_table)
+        symbol_table = SymbolTable(self.lexer.input)
+        block = Block(
+            line=self.current_token.line,
+            column=self.current_token.column,
+            symbol_table=symbol_table,
+        )
+        self.symbol_tables.append(symbol_table)
 
         self.match_token(TokenKind.OPEN_BRACE)
         while self.current_token.kind == TokenKind.NEWLINE:
@@ -254,7 +259,7 @@ class Parser:
 
         self.next_token()
         identifier = self.identifier()
-        self.symbol_tables[-1].add(identifier.name)
+        self.symbol_tables[-1].define(Symbol(identifier.name, line, column))
 
         if self.current_token.kind == TokenKind.ASSIGNMENT:
             self.next_token()

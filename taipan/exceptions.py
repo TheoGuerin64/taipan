@@ -14,9 +14,19 @@ class TaipanFileError(TaipanError):
         self.path = path
 
 
-class TaipanSyntaxError(TaipanError):
+class TaipanLocationError(TaipanError):
+    ERROR_TYPE = "LocationError"
+
     def __init__(self, file: Path, line: int, column: int, message: str) -> None:
-        super().__init__(f"{file}:{line}:{column}: SyntaxError: {message}")
+        super().__init__(f"{file}:{line}:{column}: {self.ERROR_TYPE}: {message}")
+
+
+class TaipanSyntaxError(TaipanLocationError):
+    ERROR_TYPE = "SyntaxError"
+
+
+class TaipanSemanticError(TaipanLocationError):
+    ERROR_TYPE = "SemanticError"
 
 
 class TaipanCompilationError(TaipanError):
