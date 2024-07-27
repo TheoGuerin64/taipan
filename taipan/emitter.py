@@ -95,7 +95,7 @@ class Emitter:
                 assert False, node
 
     def emit_main(self) -> None:
-        self.code = f"int main(){{{self.code}return 0;}}"
+        self.code = f"int main(){{{self.code}return 0;}}\n"
 
     def emit_header(self) -> None:
         header = ""
