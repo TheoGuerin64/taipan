@@ -12,6 +12,9 @@ type Statement = If | While | Input | Print | Declaration | Assignment
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Node:
+    line: int
+    column: int
+
     def __repr__(self) -> str:
         attributes = [
             f"{key}={value!r}"
@@ -137,19 +140,19 @@ class Block(Node):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Program(Node):
-    block: Block = field(default_factory=Block)
+    block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class If(Node):
     condition: Comparison
-    block: Block = field(default_factory=Block)
+    block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class While(Node):
     condition: Comparison
-    block: Block = field(default_factory=Block)
+    block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)

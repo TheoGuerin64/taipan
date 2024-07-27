@@ -53,7 +53,11 @@ class Parser:
         while self.current_token.kind == TokenKind.NEWLINE:
             self.next_token()
 
-        return Program(block=self.block())
+        return Program(
+            block=self.block(),
+            line=0,
+            column=0,
+        )
 
     def comparison(self) -> Comparison:
         left = self.expression()
@@ -70,25 +74,52 @@ class Parser:
 
         right = self.expression()
 
-        node = Comparison(left=left, right=right, operator=operator)
+        comparison = Comparison(
+            left=left,
+            right=right,
+            operator=operator,
+            line=left.line,
+            column=left.column,
+        )
         while operator := ComparisonOperator.from_token(self.current_token):
             right = self.expression()
-            node = Comparison(left=node, right=right, operator=operator)
+            comparison = Comparison(
+                left=comparison,
+                right=right,
+                operator=operator,
+                line=comparison.line,
+                column=comparison.column,
+            )
             self.next_token()
-        return node
+
+        return comparison
 
     def expression(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
         node = self.term()
         while operator := ArithmeticOperator.expression_from_token(self.current_token):
             self.next_token()
-            node = BinaryExpression(left=node, right=self.term(), operator=operator)
+            node = BinaryExpression(
+                left=node,
+                right=self.term(),
+                operator=operator,
+                line=node.line,
+                column=node.column,
+            )
+
         return node
 
     def term(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
         node = self.unary()
         while operator := ArithmeticOperator.term_from_token(self.current_token):
             self.next_token()
-            node = BinaryExpression(left=node, right=self.unary(), operator=operator)
+            node = BinaryExpression(
+                left=node,
+                right=self.unary(),
+                operator=operator,
+                line=node.line,
+                column=node.column,
+            )
+
         return node
 
     def unary(self) -> UnaryExpression | Identifier | Number:
@@ -96,18 +127,36 @@ class Parser:
         if operator is None:
             return self.literal()
 
+        line = self.current_token.line
+        column = self.current_token.column
+
         self.next_token()
-        return UnaryExpression(operator=operator, value=self.literal())
+        return UnaryExpression(
+            operator=operator,
+            value=self.literal(),
+            line=line,
+            column=column,
+        )
 
     def number(self) -> Number:
         assert isinstance(self.current_token.value, float)
-        node = Number(value=self.current_token.value)
+        node = Number(
+            value=self.current_token.value,
+            line=self.current_token.line,
+            column=self.current_token.column,
+        )
+
         self.next_token()
         return node
 
     def identifier(self) -> Identifier:
         assert isinstance(self.current_token.value, str)
-        node = Identifier(name=self.current_token.value)
+        node = Identifier(
+            name=self.current_token.value,
+            line=self.current_token.line,
+            column=self.current_token.column,
+        )
+
         self.next_token()
         return node
 
@@ -126,7 +175,7 @@ class Parser:
                 )
 
     def block(self) -> Block:
-        block = Block()
+        block = Block(line=self.current_token.line, column=self.current_token.column)
         self.symbol_tables.append(block.symbol_table)
 
         self.match_token(TokenKind.OPEN_BRACE)
@@ -142,32 +191,68 @@ class Parser:
         return block
 
     def if_statement(self) -> If:
+        line = self.current_token.line
+        column = self.current_token.column
+
         self.next_token()
-        return If(condition=self.comparison(), block=self.block())
+        return If(
+            condition=self.comparison(),
+            block=self.block(),
+            line=line,
+            column=column,
+        )
 
     def while_statement(self) -> While:
+        line = self.current_token.line
+        column = self.current_token.column
+
         self.next_token()
-        return While(condition=self.comparison(), block=self.block())
+        return While(
+            condition=self.comparison(),
+            block=self.block(),
+            line=line,
+            column=column,
+        )
 
     def input_statement(self) -> Input:
+        line = self.current_token.line
+        column = self.current_token.column
+
         self.next_token()
-        node = Input(identifier=self.identifier())
-        return node
+        return Input(
+            identifier=self.identifier(),
+            line=line,
+            column=column,
+        )
 
     def print_statement(self) -> Print:
+        line = self.current_token.line
+        column = self.current_token.column
+
         self.next_token()
         match self.current_token.kind:
             case TokenKind.STRING:
                 assert isinstance(self.current_token.value, str)
-                value = String(value=self.current_token.value)
+                value = String(
+                    value=self.current_token.value,
+                    line=self.current_token.line,
+                    column=self.current_token.column,
+                )
                 self.next_token()
             case _:
                 value = self.expression()
-        return Print(value=value)
+
+        return Print(
+            value=value,
+            line=line,
+            column=column,
+        )
 
     def declaration_statement(self) -> Declaration:
-        self.next_token()
+        line = self.current_token.line
+        column = self.current_token.column
 
+        self.next_token()
         identifier = self.identifier()
         self.symbol_tables[-1].add(identifier.name)
 
@@ -177,12 +262,22 @@ class Parser:
         else:
             expression = None
 
-        return Declaration(identifier=identifier, expression=expression)
+        return Declaration(
+            identifier=identifier,
+            expression=expression,
+            line=line,
+            column=column,
+        )
 
     def assignment_statement(self) -> Assignment:
         identifier = self.identifier()
         self.match_token(TokenKind.ASSIGNMENT)
-        return Assignment(identifier=identifier, expression=self.expression())
+        return Assignment(
+            identifier=identifier,
+            expression=self.expression(),
+            line=identifier.line,
+            column=identifier.column,
+        )
 
     def statement(self) -> Statement:
         match self.current_token.kind:
