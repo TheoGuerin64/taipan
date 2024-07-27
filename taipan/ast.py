@@ -7,7 +7,7 @@ from taipan.lexer import Token, TokenKind
 from taipan.symbol_table import SymbolTable
 
 type Expression = Identifier | Number | BinaryExpression | UnaryExpression
-type Statement = If | While | Input | Print | Declaration | Assignment
+type Statement = Block | If | While | Input | Print | Declaration | Assignment
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)

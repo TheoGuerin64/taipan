@@ -286,6 +286,8 @@ class Parser:
 
     def statement(self) -> Statement:
         match self.current_token.kind:
+            case TokenKind.OPEN_BRACE:
+                return self.block()
             case TokenKind.IF:
                 return self.if_statement()
             case TokenKind.WHILE:
