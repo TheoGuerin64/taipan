@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from .lexer import Token, TokenKind
-from .symbol_table import SymbolTable
+from taipan.lexer import Token, TokenKind
+from taipan.symbol_table import SymbolTable
 
 type Expression = Identifier | Number | BinaryExpression | UnaryExpression
 type Statement = If | While | Input | Print | Declaration | Assignment

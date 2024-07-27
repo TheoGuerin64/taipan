@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .exceptions import TaipanSemanticError
+from taipan.exceptions import TaipanSemanticError
 
 
 @dataclass(frozen=True)

@@ -1,9 +1,7 @@
 from collections import deque
 from pathlib import Path
 
-from taipan.exceptions import TaipanSemanticError
-
-from .ast import (
+from taipan.ast import (
     AST,
     Assignment,
     BinaryExpression,
@@ -18,7 +16,8 @@ from .ast import (
     UnaryExpression,
     While,
 )
-from .symbol_table import SymbolTable
+from taipan.exceptions import TaipanSemanticError
+from taipan.symbol_table import SymbolTable
 
 
 def analyze(file: Path, ast: AST) -> None:

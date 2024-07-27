@@ -4,11 +4,10 @@ import tempfile
 from pathlib import Path
 
 from taipan.analyzer import analyze
-
-from .ast import AST
-from .emitter import Emitter
-from .exceptions import TaipanCompilationError
-from .parser import Parser
+from taipan.ast import AST
+from taipan.emitter import Emitter
+from taipan.exceptions import TaipanCompilationError
+from taipan.parser import Parser
 
 OPTIMIZATION_FLAG = "-Ofast"
 

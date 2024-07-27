@@ -1,7 +1,7 @@
 from collections import deque
 from pathlib import Path
 
-from .ast import (
+from taipan.ast import (
     ArithmeticOperator,
     Assignment,
     BinaryExpression,
@@ -21,9 +21,9 @@ from .ast import (
     UnaryOperator,
     While,
 )
-from .exceptions import TaipanSyntaxError
-from .lexer import Lexer, Token, TokenKind
-from .symbol_table import Symbol, SymbolTable
+from taipan.exceptions import TaipanSyntaxError
+from taipan.lexer import Lexer, Token, TokenKind
+from taipan.symbol_table import Symbol, SymbolTable
 
 
 class Parser:

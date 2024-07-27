@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from . import compiler
+from taipan import compiler
 
 
 @click.group()

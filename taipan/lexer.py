@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 
-from .exceptions import TaipanFileError, TaipanSyntaxError
+from taipan.exceptions import TaipanFileError, TaipanSyntaxError
 
 
 class TokenKind(Enum):
