@@ -6,14 +6,13 @@ from taipan.exceptions import TaipanFileError, TaipanSyntaxError
 from taipan.lexer import Lexer, Token, TokenKind
 
 
-class Tests:
+class TestLexer:
     def test_invalid_extension(self, tmp_path: Path) -> None:
         file = tmp_path / "file.txt"
         file.touch()
 
-        with pytest.raises(TaipanFileError) as e_info:
+        with pytest.raises(TaipanFileError):
             Lexer(file)
-            assert e_info.value.path == file
 
     def test_missing_permissions(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
