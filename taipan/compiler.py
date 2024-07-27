@@ -8,7 +8,7 @@ from .emitter import Emitter
 from .exceptions import TaipanCompilationError
 from .parser import Parser
 
-COMPILER_OPTIONS = ["-Ofast"]
+OPTIMIZATION_FLAG = "-Ofast"
 
 
 def _find_clang() -> Path:
@@ -35,10 +35,16 @@ def _generate_c_code(input: Path) -> str:
     return emitter.code
 
 
-def _clang_compile(code: str, destination: Path) -> None:
+def _clang_compile(code: str, destination: Path, optimize: bool) -> None:
     clang = _find_clang()
+
+    command: list[str] = [str(clang)]
+    if optimize:
+        command.append(OPTIMIZATION_FLAG)
+    command.extend(["-o", str(destination), "-xc", "-"])
+
     result = subprocess.run(
-        [clang, *COMPILER_OPTIONS, "-o", destination, "-xc", "-"],
+        command,
         input=code.encode("utf-8"),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
@@ -56,17 +62,17 @@ def compile_to_c(input: Path, output: Path) -> None:
         subprocess.run([clang_format, "-i", file])
 
 
-def compile(input: Path, output: Path) -> None:
+def compile(input: Path, output: Path, optimize: bool) -> None:
     code = _generate_c_code(input)
-    _clang_compile(code, output)
+    _clang_compile(code, output, optimize)
 
 
-def run(input: Path, output_name: str, args: tuple[str]) -> int:
+def run(input: Path, output_name: str, args: tuple[str], optimize: bool) -> int:
     code = _generate_c_code(input)
 
     with tempfile.TemporaryDirectory(delete=False) as temp_dir:
         temp_output = Path(temp_dir) / output_name
-        _clang_compile(code, temp_output)
+        _clang_compile(code, temp_output, optimize)
 
     import atexit
     import os
