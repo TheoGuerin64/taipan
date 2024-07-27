@@ -3,6 +3,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from taipan.analyzer import analyze
+
 from .ast import AST
 from .emitter import Emitter
 from .exceptions import TaipanCompilationError
@@ -29,6 +31,7 @@ def _find_clang_format() -> Path | None:
 def _generate_c_code(input: Path) -> str:
     parser = Parser(input)
     ast = AST(parser.program())
+    analyze(input, ast)
 
     emitter = Emitter()
     emitter.emit(ast.root)

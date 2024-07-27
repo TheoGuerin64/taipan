@@ -14,10 +14,10 @@ class Symbol:
 @dataclass
 class SymbolTable:
     file: Path
-    symbols: set[Symbol] = field(default_factory=set)
+    symbols: dict[str, Symbol] = field(default_factory=dict)
 
     def define(self, symbol: Symbol) -> None:
-        if symbol in self.symbols:
+        if symbol.name in self.symbols.keys():
             raise TaipanSemanticError(
                 self.file,
                 symbol.line,
@@ -25,7 +25,7 @@ class SymbolTable:
                 f"{symbol.name} already defined in this scope",
             )
 
-        self.symbols.add(symbol)
+        self.symbols[symbol.name] = symbol
 
-    def lookup(self, symbol: Symbol) -> bool:
-        return symbol in self.symbols
+    def lookup(self, name: str) -> Symbol | None:
+        return self.symbols.get(name)
