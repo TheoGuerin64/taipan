@@ -33,6 +33,8 @@ class TaipanLocationError(TaipanError):
 
     def __init__(self, file: Path, line: int, column: int, message: str) -> None:
         super().__init__(f"{file}:{line}:{column}: {message}")
+        self.line = line
+        self.column = column
 
 
 class TaipanSyntaxError(TaipanLocationError):
