@@ -27,13 +27,5 @@ class SymbolTable:
 
         self.symbols.add(symbol)
 
-    def lookup(self, symbol: Symbol) -> None:
-        if symbol not in self.symbols:
-            raise TaipanSemanticError(
-                self.file,
-                symbol.line,
-                symbol.column,
-                f"{symbol.name} not defined in this scope",
-            )
-
-        self.symbols.remove(symbol)
+    def lookup(self, symbol: Symbol) -> bool:
+        return symbol in self.symbols
