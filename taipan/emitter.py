@@ -52,10 +52,10 @@ class Emitter:
             case Print():
                 match node.value:
                     case String():
-                        type = "string"
+                        type_ = "string"
                     case _:
-                        type = "number"
-                self.code += f"print_{type}("
+                        type_ = "number"
+                self.code += f"print_{type_}("
                 self.emit(node.value)
                 self.code += ");"
             case Declaration():
