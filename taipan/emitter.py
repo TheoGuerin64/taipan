@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from taipan.ast import (
     Assignment,
     BinaryExpression,
@@ -18,8 +20,8 @@ from taipan.ast import (
 
 
 class Emitter:
-    def __init__(self) -> None:
-        self.libraries: set[str] = set()
+    def __init__(self, std: Path) -> None:
+        self.std = std
         self.code = ""
 
     def emit(self, node: Node) -> None:
@@ -44,20 +46,16 @@ class Emitter:
                 self.emit(node.block)
                 self.code += "}"
             case Input():
-                self.libraries.add("stdio.h")
-                self.code += 'if(!scanf("%lf",&'
+                self.code += "input_number(&"
                 self.emit(node.identifier)
-                self.code += "))"
-                self.emit(node.identifier)
-                self.code += "=0;"
+                self.code += ");"
             case Print():
-                self.libraries.add("stdio.h")
                 match node.value:
                     case String():
-                        format = "%s"
+                        type = "string"
                     case _:
-                        format = "%lf"
-                self.code += f'printf("{format}\\n",'
+                        type = "number"
+                self.code += f"print_{type}("
                 self.emit(node.value)
                 self.code += ");"
             case Declaration():
@@ -98,7 +96,5 @@ class Emitter:
         self.code = f"int main(){{{self.code}return 0;}}\n"
 
     def emit_header(self) -> None:
-        header = ""
-        for library in self.libraries:
-            header += f"#include <{library}>\n"
-        self.code = header + self.code
+        include = self.std / "include" / "std.h"
+        self.code = f'#include "{str(include)}"\n' + self.code
