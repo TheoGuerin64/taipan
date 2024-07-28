@@ -1,4 +1,7 @@
-from pathlib import Path
+from dataclasses import dataclass, field
+from typing import Any
+
+from jinja2 import Environment, PackageLoader
 
 from taipan.ast import (
     Assignment,
@@ -6,6 +9,7 @@ from taipan.ast import (
     Block,
     Comparison,
     Declaration,
+    Expression,
     Identifier,
     If,
     Input,
@@ -19,10 +23,48 @@ from taipan.ast import (
 )
 
 
+@dataclass
+class Function:
+    name: str
+    template: str
+    libraries: list[str] = field(default_factory=list)
+
+
+FUNCTIONS = {
+    "print": Function("print", "print.j2", ["stdio.h"]),
+    "input": Function("input", "input.j2", ["stdio.h"]),
+}
+
+
+def to_string(node: Expression) -> str:
+    match node:
+        case Number():
+            return str(node.value)
+        case Identifier():
+            return node.name
+        case BinaryExpression():
+            return to_string(node.left) + node.operator.value + to_string(node.right)
+        case UnaryExpression():
+            return node.operator.value + to_string(node.value)[0]
+        case _:
+            assert False, node
+
+
 class Emitter:
-    def __init__(self, std: Path) -> None:
-        self.std = std
+    def __init__(self) -> None:
         self.code = ""
+        self.libraries = set[str]()
+        self.env = Environment(
+            loader=PackageLoader("taipan"),
+        )
+
+    def emit_function(self, name: str, **kwargs: Any) -> None:
+        func = FUNCTIONS[name]
+        for library in func.libraries:
+            self.libraries.add(library)
+
+        template = self.env.get_template(func.template)
+        self.code += template.render(**kwargs)
 
     def emit(self, node: Node) -> None:
         match node:
@@ -46,18 +88,16 @@ class Emitter:
                 self.emit(node.block)
                 self.code += "}"
             case Input():
-                self.code += "input_number(&"
-                self.emit(node.identifier)
-                self.code += ");"
+                self.emit_function("input", identifier=node.identifier.name)
             case Print():
                 match node.value:
                     case String():
-                        type_ = "string"
+                        is_number = False
+                        value = node.value.value
                     case _:
-                        type_ = "number"
-                self.code += f"print_{type_}("
-                self.emit(node.value)
-                self.code += ");"
+                        is_number = True
+                        value = to_string(node.value)
+                self.emit_function("print", value=value, is_number=is_number)
             case Declaration():
                 self.code += "double "
                 self.emit(node.identifier)
@@ -96,5 +136,5 @@ class Emitter:
         self.code = f"int main(){{{self.code}return 0;}}\n"
 
     def emit_header(self) -> None:
-        include = self.std / "include" / "std.h"
-        self.code = f'#include "{str(include)}"\n' + self.code
+        for library in self.libraries:
+            self.code = f"#include<{library}>\n" + self.code

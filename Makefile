@@ -1,15 +1,13 @@
 all: build
 
-build: build-libs
+build:
 	poetry build
+	poetry run pip install dist/taipan-*.whl
 
-build-libs:
-	@make -C libs/*
-
-install: build-libs
+install:
 	poetry install --only main
 
-install-dev: build-libs
+install-dev:
 	poetry install --only main,dev
 	pre-commit install
 
@@ -19,7 +17,10 @@ lint:
 format:
 	poetry run ruff format taipan
 
+type-check:
+	poetry run pyright taipan
+
 test:
 	poetry run pytest tests
 
-.PHONY: all build build-libs install install-dev lint format test
+.PHONY: all build install install-dev lint format type-check test

@@ -27,30 +27,23 @@ def _find_clang_format() -> Path | None:
     return Path(clang_format)
 
 
-def _find_std() -> Path:
-    std = Path(__file__).parent / "libs" / "std"
-    if not std.exists():
-        raise FileNotFoundError("std library not found")
-    return std
-
-
-def _generate_c_code(input: Path, std: Path) -> str:
+def _generate_c_code(input: Path) -> str:
     parser = Parser(input)
     ast = AST(parser.program())
     analyze(input, ast)
 
-    emitter = Emitter(std)
+    emitter = Emitter()
     emitter.emit(ast.root)
     return emitter.code
 
 
-def _clang_compile(code: str, destination: Path, optimize: bool, std: Path) -> None:
+def _clang_compile(code: str, destination: Path, optimize: bool) -> None:
     clang = _find_clang()
 
     command: list[str] = [str(clang)]
     if optimize:
         command.append(OPTIMIZATION_FLAG)
-    command.extend(["-o", str(destination), "-xc", "-", "-lstd", f"-L{std}"])
+    command.extend(["-o", str(destination), "-xc", "-"])
 
     result = subprocess.run(
         command,
@@ -62,9 +55,7 @@ def _clang_compile(code: str, destination: Path, optimize: bool, std: Path) -> N
 
 
 def compile_to_c(input: Path, output: Path) -> None:
-    std = _find_std()
-
-    code = _generate_c_code(input, std)
+    code = _generate_c_code(input)
     file = output.with_suffix(".c")
     file.write_text(code)
 
@@ -74,19 +65,15 @@ def compile_to_c(input: Path, output: Path) -> None:
 
 
 def compile(input: Path, output: Path, optimize: bool) -> None:
-    std = _find_std()
-
-    code = _generate_c_code(input, std)
-    _clang_compile(code, output, optimize, std)
+    code = _generate_c_code(input)
+    _clang_compile(code, output, optimize)
 
 
 def run(input: Path, output_name: str, args: tuple[str], optimize: bool) -> int:
-    std = _find_std()
-
-    code = _generate_c_code(input, std)
+    code = _generate_c_code(input)
     with tempfile.TemporaryDirectory(delete=False) as temp_dir:
         temp_output = Path(temp_dir) / output_name
-        _clang_compile(code, temp_output, optimize, std)
+        _clang_compile(code, temp_output, optimize)
 
     import atexit
     import os
