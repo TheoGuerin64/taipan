@@ -40,7 +40,7 @@ def _generate_c_code(input: Path) -> str:
 def _clang_compile(code: str, destination: Path, optimize: bool) -> None:
     clang = _find_clang()
 
-    command: list[str] = [str(clang)]
+    command = [str(clang)]
     if optimize:
         command.append(OPTIMIZATION_FLAG)
     command.extend(["-o", str(destination), "-xc", "-"])

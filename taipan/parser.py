@@ -31,7 +31,7 @@ class Parser:
         self.lexer = Lexer(input)
         self.current_token = Token(TokenKind.EOF, -1, -1)
         self.peek_token = Token(TokenKind.EOF, -1, -1)
-        self.symbol_tables: deque[SymbolTable] = deque()
+        self.symbol_tables = deque[SymbolTable]()
         self.next_token()
         self.next_token()
 
