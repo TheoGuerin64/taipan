@@ -69,7 +69,7 @@ def compile(input: Path, output: Path, optimize: bool) -> None:
     _clang_compile(code, output, optimize)
 
 
-def run(input: Path, output_name: str, args: tuple[str], optimize: bool) -> int:
+def run(input: Path, output_name: str, args: tuple[str, ...], optimize: bool) -> int:
     code = _generate_c_code(input)
     with tempfile.TemporaryDirectory(delete=False) as temp_dir:
         temp_output = Path(temp_dir) / output_name
