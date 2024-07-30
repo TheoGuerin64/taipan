@@ -30,10 +30,12 @@ class Function:
     libraries: list[str] = field(default_factory=list)
 
 
-FUNCTIONS = {
-    "print": Function("print", "print.j2", ["stdio.h"]),
-    "input": Function("input", "input.j2", ["stdio.h"]),
-}
+FUNCTIONS = [
+    Function("print", "print.j2", ["stdio.h"]),
+    Function("input", "input.j2", ["stdio.h"]),
+]
+
+FUNCTION_MAPPING = {func.name: func for func in FUNCTIONS}
 
 
 def to_string(node: Expression) -> str:
@@ -59,7 +61,7 @@ class Emitter:
         )
 
     def emit_function(self, name: str, **kwargs: Any) -> None:
-        func = FUNCTIONS[name]
+        func = FUNCTION_MAPPING[name]
         for library in func.libraries:
             self.libraries.add(library)
 
