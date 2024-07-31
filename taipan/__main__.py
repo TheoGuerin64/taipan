@@ -7,7 +7,7 @@ from taipan import compiler
 
 @click.group()
 def cli() -> None:
-    pass
+    """Taipan programming language CLI"""
 
 
 @cli.command()
@@ -16,6 +16,7 @@ def cli() -> None:
 @click.option("-c", "compile_c", type=click.BOOL, is_flag=True, default=False, help="Output C code")
 @click.option("-O", "optimize", type=click.BOOL, is_flag=True, default=False, help="Optimize")
 def build(input: Path, output: Path | None, compile_c: bool, optimize: bool) -> None:
+    """Compile Taipan code to C or binary"""
     if output is None:
         output = Path(input.name.removesuffix(".tp"))
 
@@ -30,6 +31,7 @@ def build(input: Path, output: Path | None, compile_c: bool, optimize: bool) -> 
 @click.argument("args", type=click.STRING, nargs=-1)
 @click.option("-O", "optimize", type=click.BOOL, is_flag=True, default=False, help="Optimize")
 def run(input: Path, args: tuple[str, ...], optimize: bool) -> None:
+    """Run Taipan code with arguments"""
     output_name = input.with_suffix("").name
     compiler.run(input, output_name, args, optimize)
 
