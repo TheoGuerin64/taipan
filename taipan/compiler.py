@@ -30,7 +30,7 @@ def _find_clang_format() -> Path | None:
 def _generate_c_code(input: Path) -> str:
     parser = Parser(input)
     ast = AST(parser.program())
-    analyze(input, ast)
+    analyze(ast.root)
 
     emitter = Emitter()
     emitter.emit(ast.root)

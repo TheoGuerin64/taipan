@@ -12,7 +12,7 @@ class TestAnalyzer:
     def compile(self, file: Path, code: str) -> None:
         parser = Parser(file)
         ast = AST(parser.program())
-        analyze(file, ast)
+        analyze(ast.root)
 
     def test_redefine(self, tmp_path: Path) -> None:
         code = """\

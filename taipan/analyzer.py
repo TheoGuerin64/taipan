@@ -1,8 +1,6 @@
 from collections import deque
-from pathlib import Path
 
 from taipan.ast import (
-    AST,
     Assignment,
     BinaryExpression,
     Block,
@@ -20,10 +18,6 @@ from taipan.exceptions import TaipanSemanticError
 from taipan.symbol_table import SymbolTable
 
 
-def analyze(file: Path, ast: AST) -> None:
-    _visit(file, deque(), ast.root)
-
-
 def _is_defined(symbol_tables: deque[SymbolTable], identifier: Identifier) -> bool:
     for table in reversed(symbol_tables):
         symbol = table.lookup(identifier.name)
@@ -34,33 +28,36 @@ def _is_defined(symbol_tables: deque[SymbolTable], identifier: Identifier) -> bo
     return False
 
 
-def _visit(file: Path, symbol_tables: deque[SymbolTable], node: Node) -> None:
+def analyze(node: Node, symbol_tables: deque[SymbolTable] | None = None) -> None:
+    if symbol_tables is None:
+        symbol_tables = deque()
+
     match node:
         case Program():
-            _visit(file, symbol_tables, node.block)
+            analyze(node.block, symbol_tables)
         case Block():
             symbol_tables.append(node.symbol_table)
             for statement in node.statements:
-                _visit(file, symbol_tables, statement)
+                analyze(statement, symbol_tables)
             symbol_tables.pop()
         case If() | While():
-            _visit(file, symbol_tables, node.condition)
-            _visit(file, symbol_tables, node.block)
+            analyze(node.condition, symbol_tables)
+            analyze(node.block, symbol_tables)
         case Input():
-            _visit(file, symbol_tables, node.identifier)
+            analyze(node.identifier, symbol_tables)
         case Print():
-            _visit(file, symbol_tables, node.value)
+            analyze(node.value, symbol_tables)
         case Assignment():
-            _visit(file, symbol_tables, node.identifier)
-            _visit(file, symbol_tables, node.expression)
+            analyze(node.identifier, symbol_tables)
+            analyze(node.expression, symbol_tables)
         case BinaryExpression():
-            _visit(file, symbol_tables, node.left)
-            _visit(file, symbol_tables, node.right)
+            analyze(node.left, symbol_tables)
+            analyze(node.right, symbol_tables)
         case UnaryExpression():
-            _visit(file, symbol_tables, node.value)
+            analyze(node.value, symbol_tables)
         case Comparison():
-            _visit(file, symbol_tables, node.left)
-            _visit(file, symbol_tables, node.right)
+            analyze(node.left, symbol_tables)
+            analyze(node.right, symbol_tables)
         case Identifier():
             if not _is_defined(symbol_tables, node):
                 raise TaipanSemanticError(node.location, f"Identifier '{node.name}' is not defined")
