@@ -164,7 +164,7 @@ class Parser:
                 )
 
     def block(self) -> Block:
-        symbol_table = SymbolTable(self.current_token.location.file)
+        symbol_table = SymbolTable()
         block = Block(
             symbol_table=symbol_table,
             location=self.current_token.location,
