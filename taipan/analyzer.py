@@ -29,7 +29,7 @@ def _is_defined(symbol_tables: deque[SymbolTable], identifier: Identifier) -> bo
         symbol = table.lookup(identifier.name)
         if not symbol:
             continue
-        if identifier.line > symbol.line:
+        if identifier.location.line > symbol.line:
             return True
     return False
 
@@ -63,9 +63,4 @@ def _visit(file: Path, symbol_tables: deque[SymbolTable], node: Node) -> None:
             _visit(file, symbol_tables, node.right)
         case Identifier():
             if not _is_defined(symbol_tables, node):
-                raise TaipanSemanticError(
-                    file,
-                    node.line,
-                    node.column,
-                    f"Identifier '{node.name}' is not defined",
-                )
+                raise TaipanSemanticError(node.location, f"Identifier '{node.name}' is not defined")

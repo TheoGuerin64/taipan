@@ -5,6 +5,7 @@ from enum import StrEnum
 
 from taipan.lexer import Token, TokenKind
 from taipan.symbol_table import SymbolTable
+from taipan.utils import Location
 
 type Expression = Identifier | Number | BinaryExpression | UnaryExpression
 type Statement = Block | If | While | Input | Print | Declaration | Assignment
@@ -12,8 +13,7 @@ type Statement = Block | If | While | Input | Print | Declaration | Assignment
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Node:
-    line: int
-    column: int
+    location: Location
 
     def __repr__(self) -> str:
         attributes = [

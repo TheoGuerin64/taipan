@@ -6,6 +6,8 @@ from typing import IO, Any
 import click
 from click._compat import get_text_stderr
 
+from taipan.utils import Location
+
 
 class TaipanError(click.ClickException):
     ERROR_TYPE = "Error"
@@ -31,10 +33,9 @@ class TaipanFileError(TaipanError):
 class TaipanLocationError(TaipanError):
     ERROR_TYPE = "LocationError"
 
-    def __init__(self, file: Path, line: int, column: int, message: str) -> None:
-        super().__init__(f"{file}:{line}:{column}: {message}")
-        self.line = line
-        self.column = column
+    def __init__(self, location: Location, message: str) -> None:
+        super().__init__(f"{location.file}:{location.line}:{location.column}: {message}")
+        self.location = location
 
 
 class TaipanSyntaxError(TaipanLocationError):
