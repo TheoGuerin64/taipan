@@ -29,7 +29,7 @@ def build(input: Path, output: Path | None, compile_c: bool, optimize: bool) -> 
 @click.argument("input", type=click.Path(path_type=Path))
 @click.argument("args", type=click.STRING, nargs=-1)
 @click.option("-O", "optimize", type=click.BOOL, is_flag=True, default=False, help="Optimize")
-def rune(input: Path, args: tuple[str, ...], optimize: bool) -> None:
+def run(input: Path, args: tuple[str, ...], optimize: bool) -> None:
     output_name = input.with_suffix("").name
     compiler.run(input, output_name, args, optimize)
 
