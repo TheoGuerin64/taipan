@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from taipan.exceptions import TaipanSemanticError
 from taipan.utils import Location
@@ -7,7 +6,6 @@ from taipan.utils import Location
 
 @dataclass
 class SymbolTable:
-    file: Path
     symbols: dict[str, Location] = field(default_factory=dict)
 
     def define(self, name: str, location: Location) -> None:
