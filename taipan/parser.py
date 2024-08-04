@@ -106,14 +106,16 @@ class Parser:
 
     def term(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
         node = self.unary()
+        location = node.location
         while operator := ArithmeticOperator.term_from_token(self.current_token):
             self.next_token()
             node = BinaryExpression(
                 left=node,
                 right=self.unary(),
                 operator=operator,
-                location=node.location,
+                location=location,
             )
+            location = node.right.location
 
         return node
 
