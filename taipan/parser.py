@@ -62,7 +62,6 @@ class Parser:
 
     def comparison(self) -> Comparison:
         left = self.expression()
-
         operator = ComparisonOperator.from_token(self.current_token)
         if operator is None:
             raise TaipanSyntaxError(
@@ -70,7 +69,6 @@ class Parser:
                 f"Expected comparison operator, got {self.current_token.kind}",
             )
         self.next_token()
-
         right = self.expression()
 
         comparison = Comparison(
@@ -80,12 +78,11 @@ class Parser:
             location=left.location,
         )
         while operator := ComparisonOperator.from_token(self.current_token):
-            right = self.expression()
             comparison = Comparison(
                 left=comparison,
-                right=right,
+                right=self.expression(),
                 operator=operator,
-                location=comparison.location,
+                location=left.location,
             )
             self.next_token()
 
