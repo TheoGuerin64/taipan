@@ -212,7 +212,10 @@ class Parser:
         match self.current_token.kind:
             case TokenKind.STRING:
                 assert isinstance(self.current_token.value, str)
-                value = String(value=self.current_token.value, location=location)
+                value = String(
+                    value=self.current_token.value,
+                    location=self.current_token.location,
+                )
                 self.next_token()
             case _:
                 value = self.expression()
