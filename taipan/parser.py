@@ -226,6 +226,11 @@ class Parser:
         location = self.current_token.location
 
         self.next_token()
+        if self.current_token.kind != TokenKind.IDENTIFIER:
+            raise TaipanSyntaxError(
+                self.current_token.location,
+                f"Expected identifier, got {self.current_token.kind}",
+            )
         identifier = self.identifier()
         self.symbol_tables[-1].define(identifier.name, location)
 
