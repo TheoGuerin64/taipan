@@ -78,13 +78,13 @@ class Parser:
             location=left.location,
         )
         while operator := ComparisonOperator.from_token(self.current_token):
+            self.next_token()
             comparison = Comparison(
                 left=comparison,
                 right=self.expression(),
                 operator=operator,
                 location=left.location,
             )
-            self.next_token()
 
         return comparison
 
