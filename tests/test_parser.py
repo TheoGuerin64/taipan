@@ -16,6 +16,7 @@ from taipan.ast import (
     NodeList,
     Number,
     Print,
+    Program,
     String,
     UnaryExpression,
     UnaryOperator,
@@ -438,7 +439,18 @@ class TestParser:
         with pytest.raises(TaipanSyntaxError):
             parser.statement()
 
-    def test_empty_file(self, tmp_path: Path) -> None:
+    def test_program(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("{}")
+
+        parser = Parser(file)
+        program = parser.program()
+        assert program == Program(
+            location=Location(file, 0, 0),
+            block=Block(location=Location(file, 1, 1)),
+        )
+
+    def test_programm_with_empty_file(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("")
 
@@ -446,7 +458,7 @@ class TestParser:
         with pytest.raises(TaipanSyntaxError):
             parser.program()
 
-    def test_newline(self, tmp_path: Path) -> None:
+    def test_programm_with_newlines(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("\n\n\n")
 
