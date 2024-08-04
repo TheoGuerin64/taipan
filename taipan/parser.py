@@ -164,12 +164,8 @@ class Parser:
                 )
 
     def block(self) -> Block:
-        symbol_table = SymbolTable()
-        block = Block(
-            symbol_table=symbol_table,
-            location=self.current_token.location,
-        )
-        self.symbol_tables.append(symbol_table)
+        block = Block(location=self.current_token.location)
+        self.symbol_tables.append(block.symbol_table)
 
         self.match_token(TokenKind.OPEN_BRACE)
         while self.current_token.kind == TokenKind.NEWLINE:
