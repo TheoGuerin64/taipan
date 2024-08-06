@@ -1,7 +1,4 @@
-from dataclasses import dataclass, field
 from typing import Any
-
-from jinja2 import Environment, PackageLoader
 
 from taipan.ast import (
     Assignment,
@@ -21,21 +18,7 @@ from taipan.ast import (
     UnaryExpression,
     While,
 )
-
-
-@dataclass
-class Function:
-    name: str
-    template: str
-    libraries: list[str] = field(default_factory=list)
-
-
-FUNCTIONS = [
-    Function("print", "print.j2", ["stdio.h"]),
-    Function("input", "input.j2", ["stdio.h"]),
-]
-
-FUNCTION_MAPPING = {func.name: func for func in FUNCTIONS}
+from taipan.templates import functions
 
 
 def to_string(node: Expression) -> str:
@@ -56,17 +39,11 @@ class Emitter:
     def __init__(self) -> None:
         self.code = ""
         self.libraries = set[str]()
-        self.env = Environment(
-            loader=PackageLoader("taipan"),
-        )
 
     def emit_function(self, name: str, **kwargs: Any) -> None:
-        func = FUNCTION_MAPPING[name]
-        for library in func.libraries:
-            self.libraries.add(library)
-
-        template = self.env.get_template(func.template)
-        self.code += template.render(**kwargs)
+        code, libraries = functions.render(name, **kwargs)
+        self.code += code
+        self.libraries.update(libraries)
 
     def emit(self, node: Node) -> None:
         match node:
