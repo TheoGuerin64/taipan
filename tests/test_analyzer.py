@@ -9,7 +9,7 @@ from taipan.parser import Parser
 
 
 class TestAnalyzer:
-    def compile(self, file: Path, code: str) -> None:
+    def compile_and_analyze(self, file: Path, code: str) -> None:
         parser = Parser(file)
         ast = AST(parser.program())
         analyze(ast.root)
@@ -26,7 +26,7 @@ class TestAnalyzer:
         file.write_text(code)
 
         with pytest.raises(TaipanSemanticError):
-            self.compile(file, code)
+            self.compile_and_analyze(file, code)
 
     def test_undeclared(self, tmp_path: Path) -> None:
         code = """\
@@ -39,7 +39,7 @@ class TestAnalyzer:
         file.write_text(code)
 
         with pytest.raises(TaipanSemanticError):
-            self.compile(file, code)
+            self.compile_and_analyze(file, code)
 
     def test_defined_after(self, tmp_path: Path) -> None:
         code = """\
@@ -53,7 +53,7 @@ class TestAnalyzer:
         file.write_text(code)
 
         with pytest.raises(TaipanSemanticError):
-            self.compile(file, code)
+            self.compile_and_analyze(file, code)
 
     def test_higher_scope_declaration(self, tmp_path: Path) -> None:
         code = """\
@@ -69,7 +69,7 @@ class TestAnalyzer:
         file.write_text(code)
 
         with pytest.raises(TaipanSemanticError):
-            self.compile(file, code)
+            self.compile_and_analyze(file, code)
 
     def test_higher_scope_usage(self, tmp_path: Path) -> None:
         code = """\
@@ -84,7 +84,7 @@ class TestAnalyzer:
         file = tmp_path / "file.tp"
         file.write_text(code)
 
-        self.compile(file, code)
+        self.compile_and_analyze(file, code)
 
     def test_in_between_scope(self, tmp_path: Path) -> None:
         code = """\
@@ -98,7 +98,7 @@ class TestAnalyzer:
         file = tmp_path / "file.tp"
         file.write_text(code)
 
-        self.compile(file, code)
+        self.compile_and_analyze(file, code)
 
     def test_redefinition_inner_scope(self, tmp_path: Path) -> None:
         code = """\
@@ -114,4 +114,4 @@ class TestAnalyzer:
         file = tmp_path / "file.tp"
         file.write_text(code)
 
-        self.compile(file, code)
+        self.compile_and_analyze(file, code)

@@ -9,7 +9,7 @@ class SymbolTable:
     symbols: dict[str, Location] = field(default_factory=dict)
 
     def define(self, name: str, location: Location) -> None:
-        if name in self.symbols.keys():
+        if name in self.symbols:
             raise TaipanSemanticError(location, f"{name} already defined in this scope")
 
         self.symbols[name] = location
