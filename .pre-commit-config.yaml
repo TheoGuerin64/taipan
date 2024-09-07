@@ -1,4 +1,8 @@
 repos:
+-   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
+    rev: v0.4.0post1
+    hooks:
+    -   id: pre-commit-update
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -12,7 +16,3 @@ repos:
     rev: v1.1.379
     hooks:
     -   id: pyright
--   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
-    rev: v0.4.0post1
-    hooks:
-    -   id: pre-commit-update
