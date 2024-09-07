@@ -1,14 +1,18 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
+-   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
-      - id: check-added-large-files
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.5
+    -   id: check-added-large-files
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.4
     hooks:
-      - id: ruff
-      - id: ruff-format
-  - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.373
+    -   id: ruff
+    -   id: ruff-format
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.379
     hooks:
-    - id: pyright
+    -   id: pyright
+-   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
+    rev: v0.4.0post1
+    hooks:
+    -   id: pre-commit-update
