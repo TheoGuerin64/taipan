@@ -51,4 +51,14 @@ poetry install
 pre-commit install
 ```
 
-for the rest, you can check the `Makefile`
+### Run
+
+```bash
+poetry run taipan ...
+```
+
+### Test
+
+```bash
+poetry run pytest
+```
