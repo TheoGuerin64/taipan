@@ -43,12 +43,12 @@ taipan --help
 ### Requirements
 
 - [Poetry](https://python-poetry.org/docs/)
-- [Make](https://www.gnu.org/software/make/)
 
 ### install
 
 ```bash
-make install-dev
+poetry install
+pre-commit install
 ```
 
 for the rest, you can check the `Makefile`
