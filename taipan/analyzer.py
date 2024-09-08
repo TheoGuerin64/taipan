@@ -69,21 +69,18 @@ class Analyzer:
 
     def _analyze_expression(self, expression: Expression) -> None:
         match expression:
-            case BinaryExpression():
-                self._analyze_expression(expression.left)
-                self._analyze_expression(expression.right)
-            case UnaryExpression():
-                self._analyze_expression(expression.value)
-            case Comparison():
-                self._analyze_expression(expression.left)
-                self._analyze_expression(expression.right)
+            case Number():
+                pass
             case Identifier():
                 if not _is_defined(self.symbol_tables, expression):
                     raise TaipanSemanticError(
                         expression.location, f"Identifier '{expression.name}' is not defined"
                     )
-            case Number():
-                pass
+            case UnaryExpression():
+                self._analyze_expression(expression.value)
+            case BinaryExpression():
+                self._analyze_expression(expression.left)
+                self._analyze_expression(expression.right)
             case _:
                 assert False, expression
 
