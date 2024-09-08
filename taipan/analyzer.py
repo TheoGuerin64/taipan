@@ -1,16 +1,20 @@
 from collections import deque
 
 from taipan.ast import (
+    AST,
     Assignment,
     BinaryExpression,
     Block,
     Comparison,
+    Declaration,
+    Expression,
     Identifier,
     If,
     Input,
-    Node,
+    Number,
     Print,
-    Program,
+    Statement,
+    String,
     UnaryExpression,
     While,
 )
@@ -28,36 +32,65 @@ def _is_defined(symbol_tables: deque[SymbolTable], identifier: Identifier) -> bo
     return False
 
 
-def analyze(node: Node, symbol_tables: deque[SymbolTable] | None = None) -> None:
-    if symbol_tables is None:
-        symbol_tables = deque()
+class Analyzer:
+    def __init__(self) -> None:
+        self.symbol_tables = deque[SymbolTable]()
 
-    match node:
-        case Program():
-            analyze(node.block, symbol_tables)
-        case Block():
-            symbol_tables.append(node.symbol_table)
-            for statement in node.statements:
-                analyze(statement, symbol_tables)
-            symbol_tables.pop()
-        case If() | While():
-            analyze(node.condition, symbol_tables)
-            analyze(node.block, symbol_tables)
-        case Input():
-            analyze(node.identifier, symbol_tables)
-        case Print():
-            analyze(node.value, symbol_tables)
-        case Assignment():
-            analyze(node.identifier, symbol_tables)
-            analyze(node.expression, symbol_tables)
-        case BinaryExpression():
-            analyze(node.left, symbol_tables)
-            analyze(node.right, symbol_tables)
-        case UnaryExpression():
-            analyze(node.value, symbol_tables)
-        case Comparison():
-            analyze(node.left, symbol_tables)
-            analyze(node.right, symbol_tables)
-        case Identifier():
-            if not _is_defined(symbol_tables, node):
-                raise TaipanSemanticError(node.location, f"Identifier '{node.name}' is not defined")
+    @classmethod
+    def analyze(cls, ast: AST) -> None:
+        analyzer = cls()
+        analyzer._analyze_statement(ast.root.block)
+
+    def _analyze_statement(self, statement: Statement) -> None:
+        match statement:
+            case Block():
+                self.symbol_tables.append(statement.symbol_table)
+                for statement in statement.statements:
+                    self._analyze_statement(statement)
+                self.symbol_tables.pop()
+            case If() | While():
+                self._analyze_comparison(statement.condition)
+                self._analyze_statement(statement.block)
+            case Input():
+                self._analyze_expression(statement.identifier)
+            case Print():
+                match statement.value:
+                    case String():
+                        pass
+                    case expression:
+                        self._analyze_expression(expression)
+            case Assignment():
+                self._analyze_expression(statement.identifier)
+                self._analyze_expression(statement.expression)
+            case Declaration():
+                pass
+            case _:
+                assert False, statement
+
+    def _analyze_expression(self, expression: Expression) -> None:
+        match expression:
+            case BinaryExpression():
+                self._analyze_expression(expression.left)
+                self._analyze_expression(expression.right)
+            case UnaryExpression():
+                self._analyze_expression(expression.value)
+            case Comparison():
+                self._analyze_expression(expression.left)
+                self._analyze_expression(expression.right)
+            case Identifier():
+                if not _is_defined(self.symbol_tables, expression):
+                    raise TaipanSemanticError(
+                        expression.location, f"Identifier '{expression.name}' is not defined"
+                    )
+            case Number():
+                pass
+            case _:
+                assert False, expression
+
+    def _analyze_comparison(self, comparison: Comparison) -> None:
+        match comparison.left:
+            case Comparison():
+                self._analyze_comparison(comparison.left)
+            case expression:
+                self._analyze_expression(expression)
+        self._analyze_expression(comparison.right)

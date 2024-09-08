@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from taipan.analyzer import analyze
+from taipan.analyzer import Analyzer
 from taipan.exceptions import TaipanSemanticError
 from taipan.parser import Parser
 
@@ -10,7 +10,7 @@ from taipan.parser import Parser
 class TestAnalyzer:
     def compile_and_analyze(self, file: Path, code: str) -> None:
         ast = Parser.parse(file)
-        analyze(ast.root)
+        Analyzer.analyze(ast)
 
     def test_redefine(self, tmp_path: Path) -> None:
         code = """\
