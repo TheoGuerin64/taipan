@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -22,7 +23,7 @@ def _find_clang() -> Path:
 def _find_clang_format() -> Path | None:
     clang_format = shutil.which("clang-format")
     if clang_format is None:
-        print("clang-format not found in PATH")
+        print("clang-format not found in PATH", file=sys.stderr)
         return None
     return Path(clang_format)
 
@@ -33,8 +34,7 @@ def _generate_c_code(input: Path) -> str:
     analyze(ast.root)
 
     emitter = Emitter()
-    emitter.emit(ast.root)
-    return emitter.code
+    return emitter.emit_program(ast.root)
 
 
 def _clang_compile(code: str, destination: Path, optimize: bool) -> None:

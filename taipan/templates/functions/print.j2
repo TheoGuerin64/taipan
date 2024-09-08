@@ -1,5 +1,5 @@
 {% if is_number %}
     printf("%lf\n", {{ value }});
 {% else %}
-    puts("{{ value }}");
+    puts({{ value }});
 {% endif %}

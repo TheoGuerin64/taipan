@@ -10,10 +10,10 @@ from taipan.ast import (
     Identifier,
     If,
     Input,
-    Node,
     Number,
     Print,
     Program,
+    Statement,
     String,
     UnaryExpression,
     While,
@@ -21,99 +21,100 @@ from taipan.ast import (
 from taipan.templates import functions
 
 
-def to_string(node: Expression) -> str:
-    match node:
-        case Number():
-            return str(node.value)
-        case Identifier():
-            return node.name
-        case BinaryExpression():
-            return to_string(node.left) + node.operator.value + to_string(node.right)
-        case UnaryExpression():
-            return node.operator.value + to_string(node.value)[0]
-        case _:
-            assert False, node
-
-
 class Emitter:
     def __init__(self) -> None:
-        self.code = ""
         self.libraries = set[str]()
 
-    def emit_function(self, name: str, **kwargs: Any) -> None:
-        code, libraries = functions.render(name, **kwargs)
-        self.code += code
-        self.libraries.update(libraries)
+    def emit_program(self, program: Program) -> str:
+        code = self.emit_statement(program.block)
+        return self.emit_header() + self.emit_main(code)
 
-    def emit(self, node: Node) -> None:
-        match node:
-            case Program():
-                self.emit(node.block)
-                self.emit_main()
-                self.emit_header()
+    def emit_main(self, code: str) -> str:
+        return f"int main(){{{code}return 0;}}\n"
+
+    def emit_header(self) -> str:
+        header = ""
+        for library in self.libraries:
+            header += f"#include<{library}>\n"
+
+        return header
+
+    def emit_statement(self, statement: Statement) -> str:
+        match statement:
             case Block():
-                for statement in node.statements:
-                    self.emit(statement)
+                code = ""
+                for statement in statement.statements:
+                    code += self.emit_statement(statement)
+
+                return code
             case If():
-                self.code += "if("
-                self.emit(node.condition)
-                self.code += "){"
-                self.emit(node.block)
-                self.code += "}"
+                condition = self.emit_comparison(statement.condition)
+                block = self.emit_statement(statement.block)
+                return f"if({condition}){{{block}}}"
             case While():
-                self.code += "while("
-                self.emit(node.condition)
-                self.code += "){"
-                self.emit(node.block)
-                self.code += "}"
+                condition = self.emit_comparison(statement.condition)
+                block = self.emit_statement(statement.block)
+                return f"while({condition}){{{block}}}"
             case Input():
-                self.emit_function("input", identifier=node.identifier.name)
+                return self.emit_function("input", identifier=statement.identifier.name)
             case Print():
-                match node.value:
+                match statement.value:
                     case String():
                         is_number = False
-                        value = node.value.value
-                    case _:
+                        value = self.emit_string(statement.value)
+                    case expression:
                         is_number = True
-                        value = to_string(node.value)
-                self.emit_function("print", value=value, is_number=is_number)
+                        value = self.emit_expression(expression)
+
+                return self.emit_function("print", value=value, is_number=is_number)
             case Declaration():
-                self.code += "double "
-                self.emit(node.identifier)
-                self.code += "="
-                if node.expression:
-                    self.emit(node.expression)
-                else:
-                    self.code += "0.0"
-                self.code += ";"
+                indentifier = statement.identifier.name
+                match statement.expression:
+                    case None:
+                        expression = "0.0"
+                    case expression:
+                        expression = self.emit_expression(expression)
+
+                return f"double {indentifier}={expression};"
             case Assignment():
-                self.emit(node.identifier)
-                self.code += "="
-                self.emit(node.expression)
-                self.code += ";"
-            case BinaryExpression():
-                self.emit(node.left)
-                self.code += node.operator.value
-                self.emit(node.right)
-            case UnaryExpression():
-                self.code += node.operator.value
-                self.emit(node.value)
-            case Comparison():
-                self.emit(node.left)
-                self.code += node.operator.value
-                self.emit(node.right)
-            case Identifier():
-                self.code += node.name
-            case Number():
-                self.code += str(node.value)
-            case String():
-                self.code += f'"{node.value}"'
+                identifier = statement.identifier.name
+                expression = self.emit_expression(statement.expression)
+                return f"{identifier}={expression};"
             case _:
-                assert False, node
+                assert False, statement
 
-    def emit_main(self) -> None:
-        self.code = f"int main(){{{self.code}return 0;}}\n"
+    def emit_function(self, name: str, **kwargs: Any) -> str:
+        code, libraries = functions.render(name, **kwargs)
+        self.libraries.update(libraries)
+        return code
 
-    def emit_header(self) -> None:
-        for library in self.libraries:
-            self.code = f"#include<{library}>\n" + self.code
+    def emit_expression(self, expression: Expression) -> str:
+        match expression:
+            case Number():
+                return str(expression.value)
+            case Identifier():
+                return expression.name
+            case UnaryExpression():
+                return expression.operator.value + self.emit_expression(expression.value)
+            case BinaryExpression():
+                return (
+                    self.emit_expression(expression.left)
+                    + expression.operator.value
+                    + self.emit_expression(expression.right)
+                )
+            case _:
+                assert False, expression
+
+    def emit_comparison(self, comparison: Comparison) -> str:
+        match comparison.left:
+            case Comparison():
+                left = self.emit_comparison(comparison.left)
+            case Number() | Identifier() | UnaryExpression() | BinaryExpression():
+                left = self.emit_expression(comparison.left)
+            case _:
+                assert False, comparison
+
+        return left + comparison.operator + self.emit_expression(comparison.right)
+
+    def emit_string(self, string: String) -> str:
+        return f'"{string.value}"'

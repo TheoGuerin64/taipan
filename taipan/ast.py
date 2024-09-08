@@ -128,7 +128,7 @@ class ComparisonOperator(StrEnum):
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Comparison(Node):
     left: Expression | Comparison
-    right: Expression | Comparison
+    right: Expression
     operator: ComparisonOperator
 
 
