@@ -16,16 +16,7 @@ class Node:
     location: Location
 
     def __repr__(self) -> str:
-        attributes = [
-            f"{key}={value!r}"
-            for key, value in self.__dict__.items()
-            if key != "parent" and not isinstance(value, (Node, NodeList))
-        ]
-        return f"{self.__class__.__name__}({', '.join(attributes)})"
-
-
-class NodeList[T: Node](list[T]):
-    pass
+        return self.__class__.__name__
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -63,7 +54,7 @@ class ArithmeticOperator(StrEnum):
             case TokenKind.MINUS:
                 return ArithmeticOperator.SUBTRACT
             case _:
-                assert False, token
+                return None
 
     @staticmethod
     def term_from_token(token: Token) -> ArithmeticOperator | None:
@@ -75,7 +66,7 @@ class ArithmeticOperator(StrEnum):
             case TokenKind.MODULO:
                 return ArithmeticOperator.MODULO
             case _:
-                assert False, token
+                return None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -97,7 +88,7 @@ class UnaryOperator(StrEnum):
             case TokenKind.MINUS:
                 return UnaryOperator.NEGATIVE
             case _:
-                assert False, token
+                return None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -130,7 +121,7 @@ class ComparisonOperator(StrEnum):
             case TokenKind.GREATER_EQUAL:
                 return ComparisonOperator.GREATER_EQUAL
             case _:
-                assert False, token
+                return None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -142,7 +133,7 @@ class Comparison(Node):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Block(Node):
-    statements: NodeList[Statement] = field(default_factory=NodeList)
+    statements: list[Statement] = field(default_factory=list)
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
 
 

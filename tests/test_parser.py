@@ -13,7 +13,6 @@ from taipan.ast import (
     Identifier,
     If,
     Input,
-    NodeList,
     Number,
     Print,
     Program,
@@ -269,8 +268,8 @@ class TestParser:
         parser = Parser(file)
         block = parser.block()
         expected_block = Block(location=Location(file, 1, 3))
-        expected_block = Block(location=Location(file, 1, 2), statements=NodeList([expected_block]))
-        expected_block = Block(location=Location(file, 1, 1), statements=NodeList([expected_block]))
+        expected_block = Block(location=Location(file, 1, 2), statements=[expected_block])
+        expected_block = Block(location=Location(file, 1, 1), statements=[expected_block])
         assert block == expected_block
 
     def test_block_missing_newline(self, tmp_path: Path) -> None:
@@ -366,7 +365,7 @@ class TestParser:
         )
         assert block == Block(
             location=Location(file, 1, 1),
-            statements=NodeList([expected_statement]),
+            statements=[expected_statement],
             symbol_table=SymbolTable({"x": Location(file, 1, 2)}),
         )
 
@@ -383,7 +382,7 @@ class TestParser:
         )
         assert block == Block(
             location=Location(file, 1, 1),
-            statements=NodeList([expected_statement]),
+            statements=[expected_statement],
             symbol_table=SymbolTable({"x": Location(file, 1, 2)}),
         )
 
