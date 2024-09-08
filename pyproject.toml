@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "taipan-lang"
-version = "0.1.0"
+version = "0.1.1"
 description = "Taipan is a simple imperative programming language."
 authors = ["Theo Guerin"]
 packages = [{include = "taipan"}]
