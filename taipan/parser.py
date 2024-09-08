@@ -58,9 +58,7 @@ class Parser:
         self.peek_token = self.lexer.next_token()
 
     def _program(self) -> Program:
-        while self.current_token.kind == TokenKind.NEWLINE:
-            self._next_token()
-
+        self._skip_nl()
         return Program(
             block=self._block(),
             location=Location(self.lexer.file, 0, 0),
@@ -170,9 +168,9 @@ class Parser:
         block = Block(location=self.current_token.location)
         self.symbol_tables.append(block.symbol_table)
 
+        self._skip_nl()
         self._match_token(TokenKind.OPEN_BRACE)
-        while self.current_token.kind == TokenKind.NEWLINE:
-            self._next_token()
+        self._skip_nl()
 
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
             block.statements.append(self._statement())
@@ -279,7 +277,10 @@ class Parser:
                     f"Expected statement, got {self.current_token.kind}",
                 )
 
-    def _nl(self) -> None:
-        self._match_token(TokenKind.NEWLINE)
+    def _skip_nl(self) -> None:
         while self.current_token.kind == TokenKind.NEWLINE:
             self._next_token()
+
+    def _nl(self) -> None:
+        self._match_token(TokenKind.NEWLINE)
+        self._skip_nl()
