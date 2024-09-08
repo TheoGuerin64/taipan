@@ -10,7 +10,9 @@ Taipan is a simple imperative programming language.
 
 ## Install
 
-Comming soon...
+```bash
+pip install taipan-lang
+```
 
 ## Usage
 

@@ -1,9 +1,11 @@
 [tool.poetry]
-name = "taipan"
+name = "taipan-lang"
 version = "0.1.0"
 description = "Taipan is a simple imperative programming language."
 authors = ["Theo Guerin"]
 packages = [{include = "taipan"}]
+repository = "https://github.com/TheoGuerin64/taipan"
+readme = "README.md"
 
 [tool.poetry.scripts]
 taipan = "taipan.__main__:cli"
