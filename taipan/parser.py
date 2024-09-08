@@ -2,6 +2,7 @@ from collections import deque
 from pathlib import Path
 
 from taipan.ast import (
+    AST,
     ArithmeticOperator,
     Assignment,
     BinaryExpression,
@@ -36,40 +37,45 @@ class Parser:
 
         self.current_token = INVALID_TOKEN
         self.peek_token = INVALID_TOKEN
-        self.next_token()
-        self.next_token()
+        self._next_token()
+        self._next_token()
 
-    def match_token(self, token_kind: TokenKind) -> None:
+    @classmethod
+    def parse(cls, input: Path) -> AST:
+        parser = cls(input)
+        return AST(parser._program())
+
+    def _match_token(self, token_kind: TokenKind) -> None:
         if self.current_token.kind != token_kind:
             raise TaipanSyntaxError(
                 self.current_token.location,
                 f"Expected {token_kind}, got {self.current_token.kind}",
             )
-        self.next_token()
+        self._next_token()
 
-    def next_token(self) -> None:
+    def _next_token(self) -> None:
         self.current_token = self.peek_token
         self.peek_token = self.lexer.next_token()
 
-    def program(self) -> Program:
+    def _program(self) -> Program:
         while self.current_token.kind == TokenKind.NEWLINE:
-            self.next_token()
+            self._next_token()
 
         return Program(
-            block=self.block(),
+            block=self._block(),
             location=Location(self.lexer.file, 0, 0),
         )
 
-    def comparison(self) -> Comparison:
-        left = self.expression()
+    def _comparison(self) -> Comparison:
+        left = self._expression()
         operator = ComparisonOperator.from_token(self.current_token)
         if operator is None:
             raise TaipanSyntaxError(
                 self.current_token.location,
                 f"Expected comparison operator, got {self.current_token.kind}",
             )
-        self.next_token()
-        right = self.expression()
+        self._next_token()
+        right = self._expression()
 
         comparison = Comparison(
             left=left,
@@ -78,137 +84,137 @@ class Parser:
             location=left.location,
         )
         while operator := ComparisonOperator.from_token(self.current_token):
-            self.next_token()
+            self._next_token()
             comparison = Comparison(
                 left=comparison,
-                right=self.expression(),
+                right=self._expression(),
                 operator=operator,
                 location=left.location,
             )
 
         return comparison
 
-    def expression(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
-        node = self.term()
+    def _expression(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
+        node = self._term()
         while operator := ArithmeticOperator.expression_from_token(self.current_token):
-            self.next_token()
+            self._next_token()
             node = BinaryExpression(
                 left=node,
-                right=self.term(),
+                right=self._term(),
                 operator=operator,
                 location=node.location,
             )
 
         return node
 
-    def term(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
-        node = self.unary()
+    def _term(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
+        node = self._unary()
         while operator := ArithmeticOperator.term_from_token(self.current_token):
-            self.next_token()
+            self._next_token()
             node = BinaryExpression(
                 left=node,
-                right=self.unary(),
+                right=self._unary(),
                 operator=operator,
                 location=node.location,
             )
 
         return node
 
-    def unary(self) -> UnaryExpression | Identifier | Number:
+    def _unary(self) -> UnaryExpression | Identifier | Number:
         operator = UnaryOperator.from_token(self.current_token)
         if operator is None:
-            return self.literal()
+            return self._literal()
 
         location = self.current_token.location
 
-        self.next_token()
+        self._next_token()
         return UnaryExpression(
             operator=operator,
-            value=self.literal(),
+            value=self._literal(),
             location=location,
         )
 
-    def number(self) -> Number:
+    def _number(self) -> Number:
         assert isinstance(self.current_token.value, float)
         node = Number(
             value=self.current_token.value,
             location=self.current_token.location,
         )
 
-        self.next_token()
+        self._next_token()
         return node
 
-    def identifier(self) -> Identifier:
+    def _identifier(self) -> Identifier:
         assert isinstance(self.current_token.value, str)
         node = Identifier(
             name=self.current_token.value,
             location=self.current_token.location,
         )
 
-        self.next_token()
+        self._next_token()
         return node
 
-    def literal(self) -> Identifier | Number:
+    def _literal(self) -> Identifier | Number:
         match self.current_token.kind:
             case TokenKind.NUMBER:
-                return self.number()
+                return self._number()
             case TokenKind.IDENTIFIER:
-                return self.identifier()
+                return self._identifier()
             case _:
                 raise TaipanSyntaxError(
                     self.current_token.location,
                     f"Expected literal, got {self.current_token.kind}",
                 )
 
-    def block(self) -> Block:
+    def _block(self) -> Block:
         block = Block(location=self.current_token.location)
         self.symbol_tables.append(block.symbol_table)
 
-        self.match_token(TokenKind.OPEN_BRACE)
+        self._match_token(TokenKind.OPEN_BRACE)
         while self.current_token.kind == TokenKind.NEWLINE:
-            self.next_token()
+            self._next_token()
 
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
-            block.statements.append(self.statement())
-            self.nl()
-        self.next_token()
+            block.statements.append(self._statement())
+            self._nl()
+        self._next_token()
 
         self.symbol_tables.pop()
         return block
 
-    def if_statement(self) -> If:
+    def _if_statement(self) -> If:
         location = self.current_token.location
 
-        self.next_token()
+        self._next_token()
         return If(
-            condition=self.comparison(),
-            block=self.block(),
+            condition=self._comparison(),
+            block=self._block(),
             location=location,
         )
 
-    def while_statement(self) -> While:
+    def _while_statement(self) -> While:
         location = self.current_token.location
 
-        self.next_token()
+        self._next_token()
         return While(
-            condition=self.comparison(),
-            block=self.block(),
+            condition=self._comparison(),
+            block=self._block(),
             location=location,
         )
 
-    def input_statement(self) -> Input:
+    def _input_statement(self) -> Input:
         location = self.current_token.location
 
-        self.next_token()
+        self._next_token()
         return Input(
-            identifier=self.identifier(),
+            identifier=self._identifier(),
             location=location,
         )
 
-    def print_statement(self) -> Print:
+    def _print_statement(self) -> Print:
         location = self.current_token.location
 
-        self.next_token()
+        self._next_token()
         match self.current_token.kind:
             case TokenKind.STRING:
                 assert isinstance(self.current_token.value, str)
@@ -216,64 +222,64 @@ class Parser:
                     value=self.current_token.value,
                     location=self.current_token.location,
                 )
-                self.next_token()
+                self._next_token()
             case _:
-                value = self.expression()
+                value = self._expression()
 
         return Print(value=value, location=location)
 
-    def declaration_statement(self) -> Declaration:
+    def _declaration_statement(self) -> Declaration:
         location = self.current_token.location
 
-        self.next_token()
+        self._next_token()
         if self.current_token.kind != TokenKind.IDENTIFIER:
             raise TaipanSyntaxError(
                 self.current_token.location,
                 f"Expected identifier, got {self.current_token.kind}",
             )
-        identifier = self.identifier()
+        identifier = self._identifier()
         self.symbol_tables[-1].define(identifier.name, location)
 
         if self.current_token.kind == TokenKind.ASSIGNMENT:
-            self.next_token()
-            expression = self.expression()
+            self._next_token()
+            expression = self._expression()
         else:
             expression = None
 
         return Declaration(identifier=identifier, expression=expression, location=location)
 
-    def assignment_statement(self) -> Assignment:
-        identifier = self.identifier()
-        self.match_token(TokenKind.ASSIGNMENT)
+    def _assignment_statement(self) -> Assignment:
+        identifier = self._identifier()
+        self._match_token(TokenKind.ASSIGNMENT)
         return Assignment(
             identifier=identifier,
-            expression=self.expression(),
+            expression=self._expression(),
             location=identifier.location,
         )
 
-    def statement(self) -> Statement:
+    def _statement(self) -> Statement:
         match self.current_token.kind:
             case TokenKind.OPEN_BRACE:
-                return self.block()
+                return self._block()
             case TokenKind.IF:
-                return self.if_statement()
+                return self._if_statement()
             case TokenKind.WHILE:
-                return self.while_statement()
+                return self._while_statement()
             case TokenKind.INPUT:
-                return self.input_statement()
+                return self._input_statement()
             case TokenKind.PRINT:
-                return self.print_statement()
+                return self._print_statement()
             case TokenKind.DECLARATION:
-                return self.declaration_statement()
+                return self._declaration_statement()
             case TokenKind.IDENTIFIER:
-                return self.assignment_statement()
+                return self._assignment_statement()
             case _:
                 raise TaipanSyntaxError(
                     self.current_token.location,
                     f"Expected statement, got {self.current_token.kind}",
                 )
 
-    def nl(self) -> None:
-        self.match_token(TokenKind.NEWLINE)
+    def _nl(self) -> None:
+        self._match_token(TokenKind.NEWLINE)
         while self.current_token.kind == TokenKind.NEWLINE:
-            self.next_token()
+            self._next_token()

@@ -33,7 +33,7 @@ class TestParser:
         file.write_text("1")
 
         parser = Parser(file)
-        number = parser.number()
+        number = parser._number()
         assert number == Number(location=Location(file, 1, 1), value=1)
 
     def test_identifier(self, tmp_path: Path) -> None:
@@ -41,7 +41,7 @@ class TestParser:
         file.write_text("x")
 
         parser = Parser(file)
-        identifier = parser.identifier()
+        identifier = parser._identifier()
         assert identifier == Identifier(location=Location(file, 1, 1), name="x")
 
     def test_literal_with_identifier(self, tmp_path: Path) -> None:
@@ -49,7 +49,7 @@ class TestParser:
         file.write_text("hello")
 
         parser = Parser(file)
-        literal = parser.literal()
+        literal = parser._literal()
         assert literal == Identifier(location=Location(file, 1, 1), name="hello")
 
     def test_literal_with_keyword(self, tmp_path: Path) -> None:
@@ -58,14 +58,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.literal()
+            parser._literal()
 
     def test_unary_without_sign(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("1")
 
         parser = Parser(file)
-        unary = parser.unary()
+        unary = parser._unary()
         assert unary == Number(location=Location(file, 1, 1), value=1)
 
     def test_unary_with_negative_number(self, tmp_path: Path) -> None:
@@ -73,7 +73,7 @@ class TestParser:
         file.write_text("-1")
 
         parser = Parser(file)
-        unary = parser.unary()
+        unary = parser._unary()
         assert unary == UnaryExpression(
             location=Location(file, 1, 1),
             operator=UnaryOperator.NEGATIVE,
@@ -85,7 +85,7 @@ class TestParser:
         file.write_text("1 * 2")
 
         parser = Parser(file)
-        term = parser.term()
+        term = parser._term()
         assert term == BinaryExpression(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -98,7 +98,7 @@ class TestParser:
         file.write_text("1")
 
         parser = Parser(file)
-        term = parser.term()
+        term = parser._term()
         assert term == Number(location=Location(file, 1, 1), value=1)
 
     def test_term_with_multiple_operations(self, tmp_path: Path) -> None:
@@ -106,7 +106,7 @@ class TestParser:
         file.write_text("1 * 2 / 3 % 4")
 
         parser = Parser(file)
-        term = parser.term()
+        term = parser._term()
         expected_term = BinaryExpression(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -133,14 +133,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.term()
+            parser._term()
 
     def test_expression_with_addition(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("1 + 2")
 
         parser = Parser(file)
-        expression = parser.expression()
+        expression = parser._expression()
         assert expression == BinaryExpression(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -153,7 +153,7 @@ class TestParser:
         file.write_text("1")
 
         parser = Parser(file)
-        expression = parser.expression()
+        expression = parser._expression()
         assert expression == Number(location=Location(file, 1, 1), value=1)
 
     def test_expression_with_multiple_operations(self, tmp_path: Path) -> None:
@@ -161,7 +161,7 @@ class TestParser:
         file.write_text("1 + 2 * 3 - 4")
 
         parser = Parser(file)
-        expression = parser.expression()
+        expression = parser._expression()
         expected_expression = BinaryExpression(
             location=Location(file, 1, 5),
             left=Number(location=Location(file, 1, 5), value=2),
@@ -188,14 +188,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.expression()
+            parser._expression()
 
     def test_comparison(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("1 == 1")
 
         parser = Parser(file)
-        comparison = parser.comparison()
+        comparison = parser._comparison()
         assert comparison == Comparison(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -208,7 +208,7 @@ class TestParser:
         file.write_text("1 > 2 == 3 < 4")
 
         parser = Parser(file)
-        comparison = parser.comparison()
+        comparison = parser._comparison()
         expected_comparison = Comparison(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -235,14 +235,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.comparison()
+            parser._comparison()
 
     def test_empty_block(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("{}")
 
         parser = Parser(file)
-        block = parser.block()
+        block = parser._block()
         assert block == Block(location=Location(file, 1, 1))
 
     def test_block_missing_open_brace(self, tmp_path: Path) -> None:
@@ -251,7 +251,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.block()
+            parser._block()
 
     def test_block_missing_closing_brace(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -259,14 +259,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.block()
+            parser._block()
 
     def test_nested_blocks(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("{{{}\n}\n}")
 
         parser = Parser(file)
-        block = parser.block()
+        block = parser._block()
         expected_block = Block(location=Location(file, 1, 3))
         expected_block = Block(location=Location(file, 1, 2), statements=[expected_block])
         expected_block = Block(location=Location(file, 1, 1), statements=[expected_block])
@@ -278,14 +278,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.block()
+            parser._block()
 
     def test_if_statement(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("if 1 == 1 {}")
 
         parser = Parser(file)
-        statement = parser.statement()
+        statement = parser._statement()
         expected_comparison = Comparison(
             location=Location(file, 1, 4),
             left=Number(location=Location(file, 1, 4), value=1),
@@ -303,7 +303,7 @@ class TestParser:
         file.write_text("while 1 != 1 {}")
 
         parser = Parser(file)
-        statement = parser.statement()
+        statement = parser._statement()
         expected_comparison = Comparison(
             location=Location(file, 1, 7),
             left=Number(location=Location(file, 1, 7), value=1),
@@ -321,7 +321,7 @@ class TestParser:
         file.write_text("input x")
 
         parser = Parser(file)
-        statement = parser.statement()
+        statement = parser._statement()
         assert statement == Input(
             location=Location(file, 1, 1),
             identifier=Identifier(location=Location(file, 1, 7), name="x"),
@@ -332,7 +332,7 @@ class TestParser:
         file.write_text('print "hello"')
 
         parser = Parser(file)
-        statement = parser.statement()
+        statement = parser._statement()
         assert statement == Print(
             location=Location(file, 1, 1),
             value=String(location=Location(file, 1, 7), value="hello"),
@@ -343,7 +343,7 @@ class TestParser:
         file.write_text("print 1 + 1")
 
         parser = Parser(file)
-        statement = parser.statement()
+        statement = parser._statement()
         expected_expression = BinaryExpression(
             location=Location(file, 1, 7),
             left=Number(location=Location(file, 1, 7), value=1),
@@ -357,7 +357,7 @@ class TestParser:
         file.write_text("{let x = 1\n}")
 
         parser = Parser(file)
-        block = parser.block()
+        block = parser._block()
         expected_statement = Declaration(
             location=Location(file, 1, 2),
             identifier=Identifier(location=Location(file, 1, 6), name="x"),
@@ -374,7 +374,7 @@ class TestParser:
         file.write_text("{let x\n}")
 
         parser = Parser(file)
-        block = parser.block()
+        block = parser._block()
         expected_statement = Declaration(
             location=Location(file, 1, 2),
             identifier=Identifier(location=Location(file, 1, 6), name="x"),
@@ -392,7 +392,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.block()
+            parser._block()
 
     def test_declaration_statement_missing_value(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -400,14 +400,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.block()
+            parser._block()
 
     def test_assignment_statement(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("x = 1")
 
         parser = Parser(file)
-        statement = parser.statement()
+        statement = parser._statement()
         assert statement == Assignment(
             location=Location(file, 1, 1),
             identifier=Identifier(location=Location(file, 1, 1), name="x"),
@@ -420,7 +420,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.statement()
+            parser._statement()
 
     def test_assignment_statement_operator(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -428,7 +428,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.statement()
+            parser._statement()
 
     def test_statement_with_unknown_keyword(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -436,14 +436,14 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.statement()
+            parser._statement()
 
     def test_program(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("{}")
 
         parser = Parser(file)
-        program = parser.program()
+        program = parser._program()
         assert program == Program(
             location=Location(file, 0, 0),
             block=Block(location=Location(file, 1, 1)),
@@ -455,7 +455,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.program()
+            parser._program()
 
     def test_programm_with_newlines(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -463,4 +463,4 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser.program()
+            parser._program()

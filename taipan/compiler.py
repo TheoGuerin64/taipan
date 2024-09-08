@@ -5,7 +5,6 @@ import tempfile
 from pathlib import Path
 
 from taipan.analyzer import analyze
-from taipan.ast import AST
 from taipan.emitter import Emitter
 from taipan.exceptions import TaipanCompilationError
 from taipan.parser import Parser
@@ -29,12 +28,10 @@ def _find_clang_format() -> Path | None:
 
 
 def _generate_c_code(input: Path) -> str:
-    parser = Parser(input)
-    ast = AST(parser.program())
+    ast = Parser.parse(input)
     analyze(ast.root)
 
-    emitter = Emitter()
-    return emitter.emit_program(ast.root)
+    return Emitter.emit(ast)
 
 
 def _clang_compile(code: str, destination: Path, optimize: bool) -> None:

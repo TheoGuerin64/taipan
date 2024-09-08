@@ -59,13 +59,13 @@ class Lexer:
 
         self.index = -1
         self.char = ""
-        self.read_char()
+        self._read_char()
 
     @property
     def location(self) -> Location:
         return Location(self.file, self.line, self.column)
 
-    def read_char(self) -> None:
+    def _read_char(self) -> None:
         if self.char == "\n":
             self.line += 1
             self.column = 1
@@ -78,53 +78,53 @@ class Lexer:
         except IndexError:
             self.char = "\0"
 
-    def peek_char(self) -> str:
+    def _peek_char(self) -> str:
         try:
             return self.source[self.index + 1]
         except IndexError:
             return "\0"
 
-    def skip_whitespaces(self) -> None:
+    def _skip_whitespaces(self) -> None:
         while self.char == " " or self.char == "\t":
-            self.read_char()
+            self._read_char()
 
-    def skip_comments(self) -> None:
+    def _skip_comments(self) -> None:
         if self.char == "#":
             while self.char != "\n":
-                self.read_char()
+                self._read_char()
 
-    def get_one_char_token(self, kind: TokenKind) -> Token:
+    def _get_one_char_token(self, kind: TokenKind) -> Token:
         return Token(kind, self.location)
 
-    def get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
+    def _get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
         location = self.location
-        if self.peek_char() == next:
-            self.read_char()
+        if self._peek_char() == next:
+            self._read_char()
             return Token(if_next, location)
         return Token(otherwise, location)
 
-    def get_string_token(self) -> Token:
+    def _get_string_token(self) -> Token:
         location = self.location
-        self.read_char()
+        self._read_char()
 
         start = self.index
         while self.char != '"':
             if self.char == "\n":
                 raise TaipanSyntaxError(location, "Missing closing quote")
-            self.read_char()
+            self._read_char()
 
         return Token(TokenKind.STRING, location, self.source[start : self.index])
 
-    def get_number_token(self) -> Token:
+    def _get_number_token(self) -> Token:
         location = self.location
 
         start = self.index
-        while self.peek_char().isdigit():
-            self.read_char()
-        if self.peek_char() == ".":
-            self.read_char()
-            while self.peek_char().isdigit():
-                self.read_char()
+        while self._peek_char().isdigit():
+            self._read_char()
+        if self._peek_char() == ".":
+            self._read_char()
+            while self._peek_char().isdigit():
+                self._read_char()
 
         value = self.source[start : self.index + 1]
         if value == ".":
@@ -132,15 +132,15 @@ class Lexer:
 
         return Token(TokenKind.NUMBER, location, float(value))
 
-    def read_identifier(self) -> str:
+    def _read_identifier(self) -> str:
         start = self.index
-        while self.peek_char().isalnum() or self.peek_char() == "_":
-            self.read_char()
+        while self._peek_char().isalnum() or self._peek_char() == "_":
+            self._read_char()
         return self.source[start : self.index + 1]
 
-    def get_identifier_token(self) -> Token:
+    def _get_identifier_token(self) -> Token:
         location = self.location
-        identifier = self.read_identifier()
+        identifier = self._read_identifier()
         match identifier:
             case "if":
                 return Token(TokenKind.IF, location)
@@ -156,44 +156,44 @@ class Lexer:
                 return Token(TokenKind.IDENTIFIER, location, name)
 
     def next_token(self) -> Token:
-        self.skip_whitespaces()
-        self.skip_comments()
+        self._skip_whitespaces()
+        self._skip_comments()
 
         match self.char:
             case "\0":
-                token = self.get_one_char_token(TokenKind.EOF)
+                token = self._get_one_char_token(TokenKind.EOF)
             case "\n":
-                token = self.get_one_char_token(TokenKind.NEWLINE)
+                token = self._get_one_char_token(TokenKind.NEWLINE)
             case "+":
-                token = self.get_one_char_token(TokenKind.PLUS)
+                token = self._get_one_char_token(TokenKind.PLUS)
             case "-":
-                token = self.get_one_char_token(TokenKind.MINUS)
+                token = self._get_one_char_token(TokenKind.MINUS)
             case "*":
-                token = self.get_one_char_token(TokenKind.MULTIPLICATION)
+                token = self._get_one_char_token(TokenKind.MULTIPLICATION)
             case "/":
-                token = self.get_one_char_token(TokenKind.DIVISION)
+                token = self._get_one_char_token(TokenKind.DIVISION)
             case "%":
-                token = self.get_one_char_token(TokenKind.MODULO)
+                token = self._get_one_char_token(TokenKind.MODULO)
             case "{":
-                token = self.get_one_char_token(TokenKind.OPEN_BRACE)
+                token = self._get_one_char_token(TokenKind.OPEN_BRACE)
             case "}":
-                token = self.get_one_char_token(TokenKind.CLOSE_BRACE)
+                token = self._get_one_char_token(TokenKind.CLOSE_BRACE)
             case "=":
-                token = self.get_two_char_token("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT)
+                token = self._get_two_char_token("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT)
             case "!":
-                token = self.get_two_char_token("=", TokenKind.NOT_EQUAL, TokenKind.NOT)
+                token = self._get_two_char_token("=", TokenKind.NOT_EQUAL, TokenKind.NOT)
             case "<":
-                token = self.get_two_char_token("=", TokenKind.LESS_EQUAL, TokenKind.LESS)
+                token = self._get_two_char_token("=", TokenKind.LESS_EQUAL, TokenKind.LESS)
             case ">":
-                token = self.get_two_char_token("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER)
+                token = self._get_two_char_token("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER)
             case '"':
-                token = self.get_string_token()
+                token = self._get_string_token()
             case char if char.isdigit() or char == ".":
-                token = self.get_number_token()
+                token = self._get_number_token()
             case char if char.isalpha() or char == "_":
-                token = self.get_identifier_token()
+                token = self._get_identifier_token()
             case other:
                 raise TaipanSyntaxError(self.location, f"Got unexpected token: {other!r}")
 
-        self.read_char()
+        self._read_char()
         return token
