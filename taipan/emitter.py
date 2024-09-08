@@ -18,7 +18,7 @@ from taipan.ast import (
     UnaryExpression,
     While,
 )
-from taipan.templates import functions
+from taipan.templates.functions import Functions
 
 
 class Emitter:
@@ -56,7 +56,7 @@ class Emitter:
                 block = self.emit_statement(statement.block)
                 return f"while({condition}){{{block}}}"
             case Input():
-                return self.emit_function("input", identifier=statement.identifier.name)
+                return self.emit_function(Functions.input, identifier=statement.identifier.name)
             case Print():
                 match statement.value:
                     case String():
@@ -66,7 +66,7 @@ class Emitter:
                         is_number = True
                         value = self.emit_expression(expression)
 
-                return self.emit_function("print", value=value, is_number=is_number)
+                return self.emit_function(Functions.print, value=value, is_number=is_number)
             case Declaration():
                 indentifier = statement.identifier.name
                 match statement.expression:
@@ -83,8 +83,8 @@ class Emitter:
             case _:
                 assert False, statement
 
-    def emit_function(self, name: str, **kwargs: Any) -> str:
-        code, libraries = functions.render(name, **kwargs)
+    def emit_function(self, function: Functions, **args: Any) -> str:
+        code, libraries = function.render(**args)
         self.libraries.update(libraries)
         return code
 
