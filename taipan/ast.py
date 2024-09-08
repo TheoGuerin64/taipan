@@ -62,6 +62,8 @@ class ArithmeticOperator(StrEnum):
                 return ArithmeticOperator.ADD
             case TokenKind.MINUS:
                 return ArithmeticOperator.SUBTRACT
+            case _:
+                assert False, token
 
     @staticmethod
     def term_from_token(token: Token) -> ArithmeticOperator | None:
@@ -72,6 +74,8 @@ class ArithmeticOperator(StrEnum):
                 return ArithmeticOperator.DIVIDE
             case TokenKind.MODULO:
                 return ArithmeticOperator.MODULO
+            case _:
+                assert False, token
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -92,6 +96,8 @@ class UnaryOperator(StrEnum):
                 return UnaryOperator.POSITIVE
             case TokenKind.MINUS:
                 return UnaryOperator.NEGATIVE
+            case _:
+                assert False, token
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -123,6 +129,8 @@ class ComparisonOperator(StrEnum):
                 return ComparisonOperator.GREATER
             case TokenKind.GREATER_EQUAL:
                 return ComparisonOperator.GREATER_EQUAL
+            case _:
+                assert False, token
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)

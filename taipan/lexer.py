@@ -152,8 +152,8 @@ class Lexer:
                 return Token(TokenKind.PRINT, location)
             case "let":
                 return Token(TokenKind.DECLARATION, location)
-            case _:
-                return Token(TokenKind.IDENTIFIER, location, identifier)
+            case name:
+                return Token(TokenKind.IDENTIFIER, location, name)
 
     def next_token(self) -> Token:
         self.skip_whitespaces()

@@ -61,3 +61,5 @@ def analyze(node: Node, symbol_tables: deque[SymbolTable] | None = None) -> None
         case Identifier():
             if not _is_defined(symbol_tables, node):
                 raise TaipanSemanticError(node.location, f"Identifier '{node.name}' is not defined")
+        case _:
+            assert False, node
