@@ -25,8 +25,8 @@ class TaipanError(click.ClickException):
 class TaipanFileError(TaipanError):
     ERROR_TYPE = "FileError"
 
-    def __init__(self, path: Path, reason: str) -> None:
-        super().__init__(f"{path}: {reason}")
+    def __init__(self, path: Path, message: str) -> None:
+        super().__init__(f"{path}: {message}")
         self.path = path
 
 
@@ -47,5 +47,4 @@ class TaipanSemanticError(TaipanLocationError):
 
 
 class TaipanCompilationError(TaipanError):
-    def __init__(self, message: str) -> None:
-        super().__init__(f"CompilationError: {message}")
+    ERROR_TYPE = "CompilationError"
