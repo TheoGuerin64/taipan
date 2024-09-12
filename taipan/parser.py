@@ -169,10 +169,10 @@ class Parser:
         self.symbol_tables.append(block.symbol_table)
 
         self._skip_nl()
-        self._match_token(TokenKind.OPEN_BRACE)
+        self._match_token(TokenKind.OPEN_CURLY_BRACKETS)
         self._skip_nl()
 
-        while self.current_token.kind != TokenKind.CLOSE_BRACE:
+        while self.current_token.kind != TokenKind.CLOSE_CURLY_BRACKETS:
             block.statements.append(self._statement())
             self._nl()
         self._next_token()
@@ -257,7 +257,7 @@ class Parser:
 
     def _statement(self) -> Statement:
         match self.current_token.kind:
-            case TokenKind.OPEN_BRACE:
+            case TokenKind.OPEN_CURLY_BRACKETS:
                 return self._block()
             case TokenKind.IF:
                 return self._if_statement()
