@@ -12,6 +12,7 @@ from taipan.ast import (
     If,
     Input,
     Number,
+    ParentheseExpression,
     Print,
     Statement,
     String,
@@ -81,6 +82,8 @@ class Analyzer:
             case BinaryExpression():
                 self._analyze_expression(expression.left)
                 self._analyze_expression(expression.right)
+            case ParentheseExpression():
+                self._analyze_expression(expression.value)
             case _:
                 assert False, expression
 
@@ -90,4 +93,9 @@ class Analyzer:
                 self._analyze_comparison(comparison.left)
             case expression:
                 self._analyze_expression(expression)
-        self._analyze_expression(comparison.right)
+
+        match comparison.left:
+            case Comparison():
+                self._analyze_comparison(comparison.left)
+            case expression:
+                self._analyze_expression(expression)
