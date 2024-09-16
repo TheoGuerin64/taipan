@@ -14,6 +14,7 @@ from taipan.ast import (
     If,
     Input,
     Number,
+    ParentheseExpression,
     Print,
     Program,
     String,
@@ -190,6 +191,70 @@ class TestParser:
         with pytest.raises(TaipanSyntaxError):
             parser._expression()
 
+    def test_expression_with_missing_close_parentheses(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("(1 + 2")
+
+        parser = Parser(file)
+        with pytest.raises(TaipanSyntaxError):
+            parser._expression()
+
+    def test_expression_with_missing_open_parentheses(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("{let a = 1 + 2)}")
+
+        parser = Parser(file)
+        with pytest.raises(TaipanSyntaxError):
+            parser._block()
+
+    def test_expression_with_parentheses(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("(1 + (2 - 3)) * (4)")
+
+        parser = Parser(file)
+        expression = parser._expression()
+
+        expected_expression = BinaryExpression(
+            location=Location(file, 1, 7),
+            left=Number(
+                location=Location(file, 1, 7),
+                value=2,
+            ),
+            operator=ArithmeticOperator.SUBTRACT,
+            right=Number(
+                location=Location(file, 1, 11),
+                value=3,
+            ),
+        )
+        expected_expression = BinaryExpression(
+            location=Location(file, 1, 2),
+            left=Number(
+                location=Location(file, 1, 2),
+                value=1,
+            ),
+            operator=ArithmeticOperator.ADD,
+            right=ParentheseExpression(
+                location=Location(file, 1, 6),
+                value=expected_expression,
+            ),
+        )
+        expected_expression = BinaryExpression(
+            location=Location(file, 1, 1),
+            left=ParentheseExpression(
+                location=Location(file, 1, 1),
+                value=expected_expression,
+            ),
+            operator=ArithmeticOperator.MULTIPLY,
+            right=ParentheseExpression(
+                location=Location(file, 1, 17),
+                value=Number(
+                    location=Location(file, 1, 18),
+                    value=4,
+                ),
+            ),
+        )
+        assert expression == expected_expression
+
     def test_comparison(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("1 == 1")
@@ -271,6 +336,21 @@ class TestParser:
         expected_block = Block(location=Location(file, 1, 2), statements=[expected_block])
         expected_block = Block(location=Location(file, 1, 1), statements=[expected_block])
         assert block == expected_block
+
+    def test_block_with_newline(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("\n\n{\n\n\nprint 1\n\n}\n")
+
+        parser = Parser(file)
+        block = parser._block()
+        expected_statement = Print(
+            location=Location(file, 6, 1),
+            value=Number(location=Location(file, 6, 7), value=1),
+        )
+        assert block == Block(
+            location=Location(file, 3, 1),
+            statements=[expected_statement],
+        )
 
     def test_block_missing_newline(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"

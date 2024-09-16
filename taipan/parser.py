@@ -10,10 +10,12 @@ from taipan.ast import (
     Comparison,
     ComparisonOperator,
     Declaration,
+    Expression,
     Identifier,
     If,
     Input,
     Number,
+    ParentheseExpression,
     Print,
     Program,
     Statement,
@@ -45,12 +47,15 @@ class Parser:
         parser = cls(input)
         return AST(parser._program())
 
-    def _match_token(self, token_kind: TokenKind) -> None:
+    def _expect_token(self, token_kind: TokenKind) -> None:
         if self.current_token.kind != token_kind:
             raise TaipanSyntaxError(
                 self.current_token.location,
                 f"Expected {token_kind}, got {self.current_token.kind}",
             )
+
+    def _match_token(self, token_kind: TokenKind) -> None:
+        self._expect_token(token_kind)
         self._next_token()
 
     def _next_token(self) -> None:
@@ -58,11 +63,15 @@ class Parser:
         self.peek_token = self.lexer.next_token()
 
     def _program(self) -> Program:
-        self._skip_nl()
         return Program(
             block=self._block(),
             location=Location(self.lexer.file, 0, 0),
         )
+
+    def _block(self) -> Block:
+        self._skip_nl()
+        self._expect_token(TokenKind.OPEN_BRACE)
+        return self._block_statement()
 
     def _comparison(self) -> Comparison:
         left = self._expression()
@@ -92,7 +101,7 @@ class Parser:
 
         return comparison
 
-    def _expression(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
+    def _expression(self) -> Expression:
         node = self._term()
         while operator := ArithmeticOperator.expression_from_token(self.current_token):
             self._next_token()
@@ -105,20 +114,37 @@ class Parser:
 
         return node
 
-    def _term(self) -> BinaryExpression | UnaryExpression | Identifier | Number:
-        node = self._unary()
+    def _term(
+        self,
+    ) -> Number | Identifier | UnaryExpression | BinaryExpression | ParentheseExpression:
+        node = self._parentheses()
         while operator := ArithmeticOperator.term_from_token(self.current_token):
             self._next_token()
             node = BinaryExpression(
                 left=node,
-                right=self._unary(),
+                right=self._parentheses(),
                 operator=operator,
                 location=node.location,
             )
 
         return node
 
-    def _unary(self) -> UnaryExpression | Identifier | Number:
+    def _parentheses(self) -> Number | Identifier | UnaryExpression | ParentheseExpression:
+        if self.current_token.kind != TokenKind.OPEN_PARENTHESE:
+            return self._unary()
+
+        location = self.current_token.location
+        self._next_token()
+
+        node = ParentheseExpression(
+            location=location,
+            value=self._expression(),
+        )
+        self._match_token(TokenKind.CLOSE_PARENTHESE)
+
+        return node
+
+    def _unary(self) -> Number | Identifier | UnaryExpression:
         operator = UnaryOperator.from_token(self.current_token)
         if operator is None:
             return self._literal()
@@ -152,7 +178,7 @@ class Parser:
         self._next_token()
         return node
 
-    def _literal(self) -> Identifier | Number:
+    def _literal(self) -> Number | Identifier:
         match self.current_token.kind:
             case TokenKind.NUMBER:
                 return self._number()
@@ -164,15 +190,14 @@ class Parser:
                     f"Expected literal, got {self.current_token.kind}",
                 )
 
-    def _block(self) -> Block:
+    def _block_statement(self) -> Block:
         block = Block(location=self.current_token.location)
         self.symbol_tables.append(block.symbol_table)
 
-        self._skip_nl()
-        self._match_token(TokenKind.OPEN_CURLY_BRACKETS)
+        self._next_token()
         self._skip_nl()
 
-        while self.current_token.kind != TokenKind.CLOSE_CURLY_BRACKETS:
+        while self.current_token.kind != TokenKind.CLOSE_BRACE:
             block.statements.append(self._statement())
             self._nl()
         self._next_token()
@@ -257,8 +282,8 @@ class Parser:
 
     def _statement(self) -> Statement:
         match self.current_token.kind:
-            case TokenKind.OPEN_CURLY_BRACKETS:
-                return self._block()
+            case TokenKind.OPEN_BRACE:
+                return self._block_statement()
             case TokenKind.IF:
                 return self._if_statement()
             case TokenKind.WHILE:

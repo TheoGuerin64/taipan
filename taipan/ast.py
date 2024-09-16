@@ -7,7 +7,7 @@ from taipan.lexer import Token, TokenKind
 from taipan.symbol_table import SymbolTable
 from taipan.utils import Location
 
-type Expression = Identifier | Number | BinaryExpression | UnaryExpression
+type Expression = Number | Identifier | UnaryExpression | BinaryExpression | ParentheseExpression
 type Statement = Block | If | While | Input | Print | Declaration | Assignment
 
 
@@ -37,6 +37,11 @@ class Number(Literal[float]):
 @dataclass(kw_only=True, frozen=True, repr=False)
 class String(Literal[str]):
     pass
+
+
+@dataclass(kw_only=True, frozen=True, repr=False)
+class ParentheseExpression(Node):
+    value: Expression
 
 
 class ArithmeticOperator(StrEnum):
@@ -127,7 +132,7 @@ class ComparisonOperator(StrEnum):
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Comparison(Node):
     left: Expression | Comparison
-    right: Expression
+    right: Expression | Comparison
     operator: ComparisonOperator
 
 

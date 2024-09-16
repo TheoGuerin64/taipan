@@ -12,6 +12,7 @@ from taipan.ast import (
     If,
     Input,
     Number,
+    ParentheseExpression,
     Print,
     Program,
     Statement,
@@ -108,6 +109,8 @@ class Emitter:
                     + expression.operator.value
                     + self._emit_expression(expression.right)
                 )
+            case ParentheseExpression():
+                return f"({self._emit_expression(expression.value)})"
             case _:
                 assert False, expression
 
@@ -115,12 +118,16 @@ class Emitter:
         match comparison.left:
             case Comparison():
                 left = self._emit_comparison(comparison.left)
-            case Number() | Identifier() | UnaryExpression() | BinaryExpression():
-                left = self._emit_expression(comparison.left)
-            case _:
-                assert False, comparison
+            case expression:
+                left = self._emit_expression(expression)
 
-        return left + comparison.operator + self._emit_expression(comparison.right)
+        match comparison.right:
+            case Comparison():
+                right = self._emit_comparison(comparison.right)
+            case expression:
+                right = self._emit_expression(expression)
+
+        return left + comparison.operator + right
 
     def _emit_string(self, string: String) -> str:
         return f'"{string.value}"'

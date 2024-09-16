@@ -14,8 +14,10 @@ class TokenKind(Enum):
     NUMBER = auto()
     STRING = auto()
 
-    OPEN_CURLY_BRACKETS = auto()
-    CLOSE_CURLY_BRACKETS = auto()
+    OPEN_BRACE = auto()
+    CLOSE_BRACE = auto()
+    OPEN_PARENTHESE = auto()
+    CLOSE_PARENTHESE = auto()
 
     IF = auto()
     WHILE = auto()
@@ -180,9 +182,13 @@ class Lexer:
             case "%":
                 token = self._get_one_char_token(TokenKind.MODULO)
             case "{":
-                token = self._get_one_char_token(TokenKind.OPEN_CURLY_BRACKETS)
+                token = self._get_one_char_token(TokenKind.OPEN_BRACE)
             case "}":
-                token = self._get_one_char_token(TokenKind.CLOSE_CURLY_BRACKETS)
+                token = self._get_one_char_token(TokenKind.CLOSE_BRACE)
+            case "(":
+                token = self._get_one_char_token(TokenKind.OPEN_PARENTHESE)
+            case ")":
+                token = self._get_one_char_token(TokenKind.CLOSE_PARENTHESE)
             case "=":
                 token = self._get_two_char_token("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT)
             case "!":
