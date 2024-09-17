@@ -69,9 +69,11 @@ class Emitter:
                     case String():
                         is_number = False
                         value = self._emit_string(statement.value)
-                    case expression:
+                    case Expression():
                         is_number = True
-                        value = self._emit_expression(expression)
+                        value = self._emit_expression(statement.value)
+                    case _:
+                        assert False, statement.value
 
                 return self._emit_function(Functions.print, value=value, is_number=is_number)
             case Declaration():
@@ -79,8 +81,10 @@ class Emitter:
                 match statement.expression:
                     case None:
                         expression = "0.0"
-                    case expression:
-                        expression = self._emit_expression(expression)
+                    case Expression():
+                        expression = self._emit_expression(statement.expression)
+                    case _:
+                        assert False, statement.expression
 
                 return f"double {indentifier}={expression};"
             case Assignment():
@@ -118,14 +122,18 @@ class Emitter:
         match comparison.left:
             case Comparison():
                 left = self._emit_comparison(comparison.left)
-            case expression:
-                left = self._emit_expression(expression)
+            case Expression():
+                left = self._emit_expression(comparison.left)
+            case _:
+                assert False, comparison.left
 
         match comparison.right:
             case Comparison():
                 right = self._emit_comparison(comparison.right)
-            case expression:
-                right = self._emit_expression(expression)
+            case Expression():
+                right = self._emit_expression(comparison.right)
+            case _:
+                assert False, comparison.right
 
         return left + comparison.operator + right
 

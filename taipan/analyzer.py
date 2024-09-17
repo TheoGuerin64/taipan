@@ -58,8 +58,10 @@ class Analyzer:
                 match statement.value:
                     case String():
                         pass
-                    case expression:
-                        self._analyze_expression(expression)
+                    case Expression():
+                        self._analyze_expression(statement.value)
+                    case _:
+                        assert False, statement.value
             case Assignment():
                 self._analyze_expression(statement.identifier)
                 self._analyze_expression(statement.expression)
@@ -91,11 +93,15 @@ class Analyzer:
         match comparison.left:
             case Comparison():
                 self._analyze_comparison(comparison.left)
-            case expression:
-                self._analyze_expression(expression)
+            case Expression():
+                self._analyze_expression(comparison.left)
+            case _:
+                assert False, comparison.left
 
         match comparison.left:
             case Comparison():
                 self._analyze_comparison(comparison.left)
-            case expression:
-                self._analyze_expression(expression)
+            case Expression():
+                self._analyze_expression(comparison.left)
+            case _:
+                assert False, comparison.left

@@ -7,9 +7,6 @@ from taipan.lexer import Token, TokenKind
 from taipan.symbol_table import SymbolTable
 from taipan.utils import Location
 
-type Expression = Number | Identifier | UnaryExpression | BinaryExpression | ParentheseExpression
-type Statement = Block | If | While | Input | Print | Declaration | Assignment
-
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Node:
@@ -19,9 +16,12 @@ class Node:
         return self.__class__.__name__
 
 
-@dataclass(kw_only=True, frozen=True, repr=False)
-class Identifier(Node):
-    name: str
+class Expression(Node):
+    pass
+
+
+class Statement(Node):
+    pass
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -29,19 +29,38 @@ class Literal[T](Node):
     value: T
 
 
-@dataclass(kw_only=True, frozen=True, repr=False)
-class Number(Literal[float]):
-    pass
-
-
-@dataclass(kw_only=True, frozen=True, repr=False)
 class String(Literal[str]):
     pass
 
 
+class Number(Literal[float], Expression):
+    pass
+
+
 @dataclass(kw_only=True, frozen=True, repr=False)
-class ParentheseExpression(Node):
-    value: Expression
+class Identifier(Expression):
+    name: str
+
+
+class UnaryOperator(StrEnum):
+    POSITIVE = "+"
+    NEGATIVE = "-"
+
+    @staticmethod
+    def from_token(token: Token) -> UnaryOperator | None:
+        match token.kind:
+            case TokenKind.PLUS:
+                return UnaryOperator.POSITIVE
+            case TokenKind.MINUS:
+                return UnaryOperator.NEGATIVE
+            case _:
+                return None
+
+
+@dataclass(kw_only=True, frozen=True, repr=False)
+class UnaryExpression(Expression):
+    value: Identifier | Number
+    operator: UnaryOperator
 
 
 class ArithmeticOperator(StrEnum):
@@ -75,31 +94,10 @@ class ArithmeticOperator(StrEnum):
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class BinaryExpression(Node):
+class BinaryExpression(Expression):
     left: Expression
     right: Expression
     operator: ArithmeticOperator
-
-
-class UnaryOperator(StrEnum):
-    POSITIVE = "+"
-    NEGATIVE = "-"
-
-    @staticmethod
-    def from_token(token: Token) -> UnaryOperator | None:
-        match token.kind:
-            case TokenKind.PLUS:
-                return UnaryOperator.POSITIVE
-            case TokenKind.MINUS:
-                return UnaryOperator.NEGATIVE
-            case _:
-                return None
-
-
-@dataclass(kw_only=True, frozen=True, repr=False)
-class UnaryExpression(Node):
-    value: Identifier | Number
-    operator: UnaryOperator
 
 
 class ComparisonOperator(StrEnum):
@@ -130,6 +128,11 @@ class ComparisonOperator(StrEnum):
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
+class ParentheseExpression(Expression):
+    value: Expression
+
+
+@dataclass(kw_only=True, frozen=True, repr=False)
 class Comparison(Node):
     left: Expression | Comparison
     right: Expression | Comparison
@@ -137,46 +140,46 @@ class Comparison(Node):
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Block(Node):
+class Block(Statement):
     statements: list[Statement] = field(default_factory=list)
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Program(Node):
+class Program(Statement):
     block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class If(Node):
+class If(Statement):
     condition: Comparison
     block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class While(Node):
+class While(Statement):
     condition: Comparison
     block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Input(Node):
+class Input(Statement):
     identifier: Identifier
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Print(Node):
+class Print(Statement):
     value: Expression | String
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Declaration(Node):
+class Declaration(Statement):
     identifier: Identifier
     expression: Expression | None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Assignment(Node):
+class Assignment(Statement):
     identifier: Identifier
     expression: Expression
 
