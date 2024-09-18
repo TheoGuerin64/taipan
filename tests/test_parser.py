@@ -86,7 +86,7 @@ class TestParser:
         file.write_text("1 * 2")
 
         parser = Parser(file)
-        term = parser._term()
+        term = parser._multiplicative()
         assert term == BinaryExpression(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -99,7 +99,7 @@ class TestParser:
         file.write_text("1")
 
         parser = Parser(file)
-        term = parser._term()
+        term = parser._multiplicative()
         assert term == Number(location=Location(file, 1, 1), value=1)
 
     def test_term_with_multiple_operations(self, tmp_path: Path) -> None:
@@ -107,7 +107,7 @@ class TestParser:
         file.write_text("1 * 2 / 3 % 4")
 
         parser = Parser(file)
-        term = parser._term()
+        term = parser._multiplicative()
         expected_term = BinaryExpression(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -134,7 +134,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser._term()
+            parser._multiplicative()
 
     def test_expression_with_addition(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -191,7 +191,7 @@ class TestParser:
         with pytest.raises(TaipanSyntaxError):
             parser._expression()
 
-    def test_expression_with_missing_close_parentheses(self, tmp_path: Path) -> None:
+    def test_missing_close_parentheses(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("(1 + 2")
 
@@ -199,13 +199,39 @@ class TestParser:
         with pytest.raises(TaipanSyntaxError):
             parser._expression()
 
-    def test_expression_with_missing_open_parentheses(self, tmp_path: Path) -> None:
+    def test_missing_open_parentheses(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.write_text("{let a = 1 + 2)}")
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
             parser._block()
+
+    def test_missing_empty_parentheses(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("()")
+
+        parser = Parser(file)
+        with pytest.raises(TaipanSyntaxError):
+            parser._expression()
+
+    def test_negative_parentheses(self, tmp_path: Path) -> None:
+        file = tmp_path / "file.tp"
+        file.write_text("-(1)")
+
+        parser = Parser(file)
+        expression = parser._expression()
+        assert expression == UnaryExpression(
+            location=Location(file, 1, 1),
+            operator=UnaryOperator.NEGATIVE,
+            value=ParentheseExpression(
+                location=Location(file, 1, 2),
+                value=Number(
+                    location=Location(file, 1, 3),
+                    value=1,
+                ),
+            ),
+        )
 
     def test_expression_with_parentheses(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
@@ -260,7 +286,7 @@ class TestParser:
         file.write_text("1 == 1")
 
         parser = Parser(file)
-        comparison = parser._comparison()
+        comparison = parser._expression()
         assert comparison == Comparison(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -273,7 +299,7 @@ class TestParser:
         file.write_text("1 > 2 == 3 < 4")
 
         parser = Parser(file)
-        comparison = parser._comparison()
+        comparison = parser._expression()
         expected_comparison = Comparison(
             location=Location(file, 1, 1),
             left=Number(location=Location(file, 1, 1), value=1),
@@ -300,7 +326,7 @@ class TestParser:
 
         parser = Parser(file)
         with pytest.raises(TaipanSyntaxError):
-            parser._comparison()
+            parser._expression()
 
     def test_empty_block(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"

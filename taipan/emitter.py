@@ -55,11 +55,11 @@ class Emitter:
 
                 return code
             case If():
-                condition = self._emit_comparison(statement.condition)
+                condition = self._emit_expression(statement.condition)
                 block = self._emit_statement(statement.block)
                 return f"if({condition}){{{block}}}"
             case While():
-                condition = self._emit_comparison(statement.condition)
+                condition = self._emit_expression(statement.condition)
                 block = self._emit_statement(statement.block)
                 return f"while({condition}){{{block}}}"
             case Input():
@@ -107,7 +107,7 @@ class Emitter:
                 return expression.name
             case UnaryExpression():
                 return expression.operator.value + self._emit_expression(expression.value)
-            case BinaryExpression():
+            case BinaryExpression() | Comparison():
                 return (
                     self._emit_expression(expression.left)
                     + expression.operator.value
@@ -117,25 +117,6 @@ class Emitter:
                 return f"({self._emit_expression(expression.value)})"
             case _:
                 assert False, expression
-
-    def _emit_comparison(self, comparison: Comparison) -> str:
-        match comparison.left:
-            case Comparison():
-                left = self._emit_comparison(comparison.left)
-            case Expression():
-                left = self._emit_expression(comparison.left)
-            case _:
-                assert False, comparison.left
-
-        match comparison.right:
-            case Comparison():
-                right = self._emit_comparison(comparison.right)
-            case Expression():
-                right = self._emit_expression(comparison.right)
-            case _:
-                assert False, comparison.right
-
-        return left + comparison.operator + right
 
     def _emit_string(self, string: String) -> str:
         return f'"{string.value}"'

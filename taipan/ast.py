@@ -42,6 +42,11 @@ class Identifier(Expression):
     name: str
 
 
+@dataclass(kw_only=True, frozen=True, repr=False)
+class ParentheseExpression(Expression):
+    value: Expression
+
+
 class UnaryOperator(StrEnum):
     POSITIVE = "+"
     NEGATIVE = "-"
@@ -59,7 +64,7 @@ class UnaryOperator(StrEnum):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class UnaryExpression(Expression):
-    value: Identifier | Number
+    value: Identifier | Number | ParentheseExpression
     operator: UnaryOperator
 
 
@@ -71,7 +76,7 @@ class ArithmeticOperator(StrEnum):
     MODULO = "%"
 
     @staticmethod
-    def expression_from_token(token: Token) -> ArithmeticOperator | None:
+    def additive_from_token(token: Token) -> ArithmeticOperator | None:
         match token.kind:
             case TokenKind.PLUS:
                 return ArithmeticOperator.ADD
@@ -81,7 +86,7 @@ class ArithmeticOperator(StrEnum):
                 return None
 
     @staticmethod
-    def term_from_token(token: Token) -> ArithmeticOperator | None:
+    def multiplicative_from_token(token: Token) -> ArithmeticOperator | None:
         match token.kind:
             case TokenKind.MULTIPLICATION:
                 return ArithmeticOperator.MULTIPLY
@@ -128,14 +133,9 @@ class ComparisonOperator(StrEnum):
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class ParentheseExpression(Expression):
-    value: Expression
-
-
-@dataclass(kw_only=True, frozen=True, repr=False)
-class Comparison(Node):
-    left: Expression | Comparison
-    right: Expression | Comparison
+class Comparison(Expression):
+    left: Expression
+    right: Expression
     operator: ComparisonOperator
 
 
@@ -146,19 +146,14 @@ class Block(Statement):
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Program(Statement):
-    block: Block
-
-
-@dataclass(kw_only=True, frozen=True, repr=False)
 class If(Statement):
-    condition: Comparison
+    condition: Expression
     block: Block
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class While(Statement):
-    condition: Comparison
+    condition: Expression
     block: Block
 
 
@@ -182,6 +177,11 @@ class Declaration(Statement):
 class Assignment(Statement):
     identifier: Identifier
     expression: Expression
+
+
+@dataclass(kw_only=True, frozen=True, repr=False)
+class Program(Statement):
+    block: Block
 
 
 @dataclass

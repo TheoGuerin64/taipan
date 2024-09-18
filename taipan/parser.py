@@ -73,65 +73,66 @@ class Parser:
         self._expect_token(TokenKind.OPEN_BRACE)
         return self._block_statement()
 
-    def _comparison(self) -> Comparison:
-        left = self._expression()
-        operator = ComparisonOperator.from_token(self.current_token)
-        if operator is None:
-            raise TaipanSyntaxError(
-                self.current_token.location,
-                f"Expected comparison operator, got {self.current_token.kind}",
-            )
-        self._next_token()
-        right = self._expression()
-
-        comparison = Comparison(
-            left=left,
-            right=right,
-            operator=operator,
-            location=left.location,
-        )
+    def _expression(self) -> Expression:
+        node = self._additive()
         while operator := ComparisonOperator.from_token(self.current_token):
             self._next_token()
-            comparison = Comparison(
-                left=comparison,
-                right=self._expression(),
-                operator=operator,
-                location=left.location,
-            )
-
-        return comparison
-
-    def _expression(self) -> Expression:
-        node = self._term()
-        while operator := ArithmeticOperator.expression_from_token(self.current_token):
-            self._next_token()
-            node = BinaryExpression(
+            node = Comparison(
                 left=node,
-                right=self._term(),
+                right=self._additive(),
                 operator=operator,
                 location=node.location,
             )
 
         return node
 
-    def _term(
+    def _additive(
         self,
-    ) -> Number | Identifier | UnaryExpression | BinaryExpression | ParentheseExpression:
-        node = self._parentheses()
-        while operator := ArithmeticOperator.term_from_token(self.current_token):
+    ) -> Number | Identifier | ParentheseExpression | UnaryExpression | BinaryExpression:
+        node = self._multiplicative()
+        while operator := ArithmeticOperator.additive_from_token(self.current_token):
             self._next_token()
             node = BinaryExpression(
                 left=node,
-                right=self._parentheses(),
+                right=self._multiplicative(),
                 operator=operator,
                 location=node.location,
             )
 
         return node
 
-    def _parentheses(self) -> Number | Identifier | UnaryExpression | ParentheseExpression:
+    def _multiplicative(
+        self,
+    ) -> Number | Identifier | ParentheseExpression | UnaryExpression | BinaryExpression:
+        node = self._unary()
+        while operator := ArithmeticOperator.multiplicative_from_token(self.current_token):
+            self._next_token()
+            node = BinaryExpression(
+                left=node,
+                right=self._unary(),
+                operator=operator,
+                location=node.location,
+            )
+
+        return node
+
+    def _unary(self) -> Number | Identifier | ParentheseExpression | UnaryExpression:
+        operator = UnaryOperator.from_token(self.current_token)
+        if operator is None:
+            return self._parentheses()
+
+        location = self.current_token.location
+        self._next_token()
+
+        return UnaryExpression(
+            operator=operator,
+            value=self._parentheses(),
+            location=location,
+        )
+
+    def _parentheses(self) -> Number | Identifier | ParentheseExpression:
         if self.current_token.kind != TokenKind.OPEN_PARENTHESE:
-            return self._unary()
+            return self._literal()
 
         location = self.current_token.location
         self._next_token()
@@ -143,20 +144,6 @@ class Parser:
         self._match_token(TokenKind.CLOSE_PARENTHESE)
 
         return node
-
-    def _unary(self) -> Number | Identifier | UnaryExpression:
-        operator = UnaryOperator.from_token(self.current_token)
-        if operator is None:
-            return self._literal()
-
-        location = self.current_token.location
-
-        self._next_token()
-        return UnaryExpression(
-            operator=operator,
-            value=self._literal(),
-            location=location,
-        )
 
     def _number(self) -> Number:
         assert isinstance(self.current_token.value, float)
@@ -210,7 +197,7 @@ class Parser:
 
         self._next_token()
         return If(
-            condition=self._comparison(),
+            condition=self._expression(),
             block=self._block(),
             location=location,
         )
@@ -220,7 +207,7 @@ class Parser:
 
         self._next_token()
         return While(
-            condition=self._comparison(),
+            condition=self._expression(),
             block=self._block(),
             location=location,
         )

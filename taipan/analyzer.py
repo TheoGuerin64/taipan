@@ -50,7 +50,7 @@ class Analyzer:
                     self._analyze_statement(statement)
                 self.symbol_tables.pop()
             case If() | While():
-                self._analyze_comparison(statement.condition)
+                self._analyze_expression(statement.condition)
                 self._analyze_statement(statement.block)
             case Input():
                 self._analyze_expression(statement.identifier)
@@ -81,27 +81,10 @@ class Analyzer:
                     )
             case UnaryExpression():
                 self._analyze_expression(expression.value)
-            case BinaryExpression():
+            case BinaryExpression() | Comparison():
                 self._analyze_expression(expression.left)
                 self._analyze_expression(expression.right)
             case ParentheseExpression():
                 self._analyze_expression(expression.value)
             case _:
                 assert False, expression
-
-    def _analyze_comparison(self, comparison: Comparison) -> None:
-        match comparison.left:
-            case Comparison():
-                self._analyze_comparison(comparison.left)
-            case Expression():
-                self._analyze_expression(comparison.left)
-            case _:
-                assert False, comparison.left
-
-        match comparison.left:
-            case Comparison():
-                self._analyze_comparison(comparison.left)
-            case Expression():
-                self._analyze_expression(comparison.left)
-            case _:
-                assert False, comparison.left
