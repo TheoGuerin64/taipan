@@ -46,6 +46,11 @@ class Emitter:
 
         return header
 
+    def _emit_function(self, function: Functions, **args: Any) -> str:
+        code, libraries = function.render(**args)
+        self.libraries.update(libraries)
+        return code
+
     def _emit_statement(self, statement: Statement) -> str:
         match statement:
             case Block():
@@ -67,15 +72,13 @@ class Emitter:
             case Print():
                 match statement.value:
                     case String():
-                        is_number = False
                         value = self._emit_string(statement.value)
                     case Expression():
-                        is_number = True
                         value = self._emit_expression(statement.value)
                     case _:
                         assert False, statement.value
 
-                return self._emit_function(Functions.print, value=value, is_number=is_number)
+                return self._emit_function(Functions.print, value=value)
             case Declaration():
                 indentifier = statement.identifier.name
                 match statement.expression:
@@ -93,11 +96,6 @@ class Emitter:
                 return f"{identifier}={expression};"
             case _:
                 assert False, statement
-
-    def _emit_function(self, function: Functions, **args: Any) -> str:
-        code, libraries = function.render(**args)
-        self.libraries.update(libraries)
-        return code
 
     def _emit_expression(self, expression: Expression) -> str:
         match expression:
