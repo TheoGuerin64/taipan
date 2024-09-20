@@ -6,6 +6,8 @@ from taipan.exceptions import TaipanFileError, TaipanSyntaxError
 from taipan.lexer import Lexer, Token, TokenKind
 from taipan.utils import Location
 
+DEFAULT_FILE = Path("file.tp")
+
 
 class TestLexer:
     def test_invalid_extension(self, tmp_path: Path) -> None:
@@ -33,225 +35,196 @@ class TestLexer:
         with pytest.raises(TaipanFileError):
             Lexer(tmp_path)
 
-    def test_valid_file(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.touch()
-
-        Lexer(file)
-
-    def test_empty(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.touch()
-
-        lexer = Lexer(file)
+    def test_empty(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "")
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_whitespaces(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text(" \t")
+    def test_whitespaces(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, " \t")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=3)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=3)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_comments(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("# comment")
+    def test_comments(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "# comment")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=10)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=10)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_non_closed_string(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text('"string')
+    def test_non_closed_string(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, '"string')
 
-        lexer = Lexer(file)
         with pytest.raises(TaipanSyntaxError):
             lexer.next_token()
 
-    def test_valid_string(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text('"string"')
+    def test_valid_string(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, '"string"')
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.STRING, value="string", location=Location(file=file, line=1, column=1)
+            kind=TokenKind.STRING,
+            value="string",
+            location=Location(file=DEFAULT_FILE, line=1, column=1),
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=9)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=9)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_dot(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text(".")
+    def test_dot(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, ".")
 
-        lexer = Lexer(file)
         with pytest.raises(TaipanSyntaxError):
             lexer.next_token()
 
-    def test_left_dot(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text(".0")
+    def test_left_dot(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, ".0")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NUMBER, value=0, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NUMBER, value=0, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=3)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=3)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_right_dot(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("0.")
+    def test_right_dot(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "0.")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NUMBER, value=0, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NUMBER, value=0, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=3)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=3)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_consecutive_numbers(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("1.2.3")
+    def test_consecutive_numbers(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "1.2.3")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NUMBER, value=1.2, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NUMBER, value=1.2, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NUMBER, value=0.3, location=Location(file=file, line=1, column=4)
+            kind=TokenKind.NUMBER, value=0.3, location=Location(file=DEFAULT_FILE, line=1, column=4)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=6)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=6)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_valid_number(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("123.456")
+    def test_valid_number(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "123.456")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NUMBER, value=123.456, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NUMBER,
+            value=123.456,
+            location=Location(file=DEFAULT_FILE, line=1, column=1),
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=8)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=8)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_start_with_number_identifier(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("0identifier")
+    def test_start_with_number_identifier(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "0identifier")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NUMBER, value=0, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NUMBER, value=0, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
             kind=TokenKind.IDENTIFIER,
             value="identifier",
-            location=Location(file=file, line=1, column=2),
+            location=Location(file=DEFAULT_FILE, line=1, column=2),
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=12)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=12)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_valid_identifier(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("_identifier64")
+    def test_valid_identifier(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "_identifier64")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
             kind=TokenKind.IDENTIFIER,
             value="_identifier64",
-            location=Location(file=file, line=1, column=1),
+            location=Location(file=DEFAULT_FILE, line=1, column=1),
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=14)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=14)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_invalid_token(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("@")
+    def test_invalid_token(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "@")
 
-        lexer = Lexer(file)
         with pytest.raises(TaipanSyntaxError):
             lexer.next_token()
 
-    def test_two_char_token(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("== !=")
+    def test_two_char_token(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "== !=")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.EQUAL, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.EQUAL, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NOT_EQUAL, location=Location(file=file, line=1, column=4)
+            kind=TokenKind.NOT_EQUAL, location=Location(file=DEFAULT_FILE, line=1, column=4)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=6)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=6)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=2, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=2, column=1)
         )
 
-    def test_multiline(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.tp"
-        file.write_text("\n  a\ne")
+    def test_multiline(self) -> None:
+        lexer = Lexer(DEFAULT_FILE, "\n  a\ne")
 
-        lexer = Lexer(file)
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=1, column=1)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=1, column=1)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.IDENTIFIER, value="a", location=Location(file=file, line=2, column=3)
+            kind=TokenKind.IDENTIFIER,
+            value="a",
+            location=Location(file=DEFAULT_FILE, line=2, column=3),
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=2, column=4)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=2, column=4)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.IDENTIFIER, value="e", location=Location(file=file, line=3, column=1)
+            kind=TokenKind.IDENTIFIER,
+            value="e",
+            location=Location(file=DEFAULT_FILE, line=3, column=1),
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.NEWLINE, location=Location(file=file, line=3, column=2)
+            kind=TokenKind.NEWLINE, location=Location(file=DEFAULT_FILE, line=3, column=2)
         )
         assert lexer.next_token() == Token(
-            kind=TokenKind.EOF, location=Location(file=file, line=4, column=1)
+            kind=TokenKind.EOF, location=Location(file=DEFAULT_FILE, line=4, column=1)
         )

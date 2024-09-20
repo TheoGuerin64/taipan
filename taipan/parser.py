@@ -33,8 +33,8 @@ INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), -1, -1))
 
 
 class Parser:
-    def __init__(self, input: Path) -> None:
-        self.lexer = Lexer(input)
+    def __init__(self, input: Path, raw_source: str | None = None) -> None:
+        self.lexer = Lexer(input, raw_source)
         self.symbol_tables = deque[SymbolTable]()
 
         self.current_token = INVALID_TOKEN
@@ -43,8 +43,8 @@ class Parser:
         self._next_token()
 
     @classmethod
-    def parse(cls, input: Path) -> AST:
-        parser = cls(input)
+    def parse(cls, input: Path, raw_source: str | None = None) -> AST:
+        parser = cls(input, raw_source)
         return AST(parser._program())
 
     def _expect_token(self, token_kind: TokenKind) -> None:

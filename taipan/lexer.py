@@ -21,10 +21,11 @@ class TokenKind(Enum):
 
     IF = auto()
     WHILE = auto()
-    INPUT = auto()
-    PRINT = auto()
     DECLARATION = auto()
     ASSIGNMENT = auto()
+
+    INPUT = auto()
+    PRINT = auto()
 
     PLUS = auto()
     MINUS = auto()
@@ -49,18 +50,19 @@ class Token:
 
 
 class Lexer:
-    def __init__(self, input: Path) -> None:
-        if input.suffix != ".tp":
-            raise TaipanFileError(input, "File must have a .tp extension")
+    def __init__(self, input_: Path, raw_source: str | None = None) -> None:
+        if input_.suffix != ".tp":
+            raise TaipanFileError(input_, "File must have a .tp extension")
 
-        try:
-            with input.open() as file:
-                raw_source = file.read()
-        except OSError as error:
-            raise TaipanFileError(input, error.strerror)
+        if raw_source is None:
+            try:
+                raw_source = input_.read_text()
+            except OSError as error:
+                raise TaipanFileError(input_, error.strerror)
+
         self.source = raw_source + "\n"
 
-        self.file = input
+        self.file = input_
         self.line = 1
         self.column = 0
 
