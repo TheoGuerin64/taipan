@@ -3,7 +3,7 @@ from enum import Enum, auto
 from pathlib import Path
 
 from taipan.exceptions import TaipanFileError, TaipanSyntaxError
-from taipan.utils import Location
+from taipan.utils import Location, Position
 
 
 class TokenKind(Enum):
@@ -70,10 +70,6 @@ class Lexer:
         self.char = ""
         self._read_char()
 
-    @property
-    def location(self) -> Location:
-        return Location(self.file, self.line, self.column)
-
     def _read_char(self) -> None:
         if self.char == "\n":
             self.line += 1
@@ -102,30 +98,57 @@ class Lexer:
             while self.char != "\n":
                 self._read_char()
 
-    def _get_one_char_token(self, kind: TokenKind) -> Token:
-        return Token(kind, self.location)
+    def _get_one_char_token(self, kind: TokenKind, size: int = 1) -> Token:
+        location = Location(
+            file=self.file,
+            start=Position(self.line, self.column),
+            end=Position(self.line, self.column + size),
+        )
+        return Token(kind, location)
 
     def _get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
-        location = self.location
-        if self._peek_char() == next:
-            self._read_char()
-            return Token(if_next, location)
-        return Token(otherwise, location)
+        start_position = Position(self.line, self.column)
+
+        if self._peek_char() != next:
+            location = Location(
+                self.file,
+                start_position,
+                Position(self.line, self.column + 1),
+            )
+            return Token(otherwise, location)
+
+        self._read_char()
+        location = Location(
+            self.file,
+            start_position,
+            Position(self.line, self.column + 1),
+        )
+        return Token(if_next, location)
 
     def _get_string_token(self) -> Token:
-        location = self.location
+        start_position = Position(self.line, self.column)
         self._read_char()
 
         start = self.index
         while self.char != '"':
             if self.char == "\n":
+                location = Location(
+                    self.file,
+                    start_position,
+                    Position(self.line, self.column),
+                )
                 raise TaipanSyntaxError(location, "Missing closing quote")
             self._read_char()
 
+        location = location = Location(
+            self.file,
+            start_position,
+            Position(self.line, self.column + 1),
+        )
         return Token(TokenKind.STRING, location, self.source[start : self.index])
 
     def _get_number_token(self) -> Token:
-        location = self.location
+        start_position = Position(self.line, self.column)
 
         start = self.index
         while self._peek_char().isdigit():
@@ -136,6 +159,11 @@ class Lexer:
                 self._read_char()
 
         value = self.source[start : self.index + 1]
+        location = Location(
+            self.file,
+            start_position,
+            Position(self.line, self.column + 1),
+        )
         if value == ".":
             raise TaipanSyntaxError(location, "Invalid number")
 
@@ -148,8 +176,14 @@ class Lexer:
         return self.source[start : self.index + 1]
 
     def _get_identifier_token(self) -> Token:
-        location = self.location
+        start_position = Position(self.line, self.column)
         identifier = self._read_identifier()
+        location = Location(
+            self.file,
+            start_position,
+            Position(self.line, self.column + 1),
+        )
+
         match identifier:
             case "if":
                 return Token(TokenKind.IF, location)
@@ -170,7 +204,7 @@ class Lexer:
 
         match self.char:
             case "\0":
-                token = self._get_one_char_token(TokenKind.EOF)
+                token = self._get_one_char_token(TokenKind.EOF, 0)
             case "\n":
                 token = self._get_one_char_token(TokenKind.NEWLINE)
             case "+":
@@ -206,7 +240,12 @@ class Lexer:
             case char if char.isalpha() or char == "_":
                 token = self._get_identifier_token()
             case other:
-                raise TaipanSyntaxError(self.location, f"Got unexpected token: {other!r}")
+                location = Location(
+                    self.file,
+                    Position(self.line, self.column),
+                    Position(self.line, self.column + 1),
+                )
+                raise TaipanSyntaxError(location, f"Got unexpected token: {other!r}")
 
         self._read_char()
         return token

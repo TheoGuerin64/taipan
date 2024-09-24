@@ -25,7 +25,7 @@ from taipan.ast import (
 from taipan.exceptions import TaipanSyntaxError
 from taipan.parser import Parser
 from taipan.symbol_table import SymbolTable
-from taipan.utils import Location
+from taipan.utils import Location, Position
 
 DEFAULT_FILE = Path("file.tp")
 
@@ -34,17 +34,38 @@ class TestParser:
     def test_number(self) -> None:
         parser = Parser(DEFAULT_FILE, "1")
         number = parser._number()
-        assert number == Number(location=Location(DEFAULT_FILE, 1, 1), value=1)
+        assert number == Number(
+            value=1,
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 2),
+            ),
+        )
 
     def test_identifier(self) -> None:
         parser = Parser(DEFAULT_FILE, "x")
         identifier = parser._identifier()
-        assert identifier == Identifier(location=Location(DEFAULT_FILE, 1, 1), name="x")
+        assert identifier == Identifier(
+            name="x",
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 2),
+            ),
+        )
 
     def test_literal_with_identifier(self) -> None:
         parser = Parser(DEFAULT_FILE, "hello")
         literal = parser._literal()
-        assert literal == Identifier(location=Location(DEFAULT_FILE, 1, 1), name="hello")
+        assert literal == Identifier(
+            name="hello",
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 6),
+            ),
+        )
 
     def test_literal_with_keyword(self) -> None:
         parser = Parser(DEFAULT_FILE, "print")
@@ -54,51 +75,134 @@ class TestParser:
     def test_unary_without_sign(self) -> None:
         parser = Parser(DEFAULT_FILE, "1")
         unary = parser._unary()
-        assert unary == Number(location=Location(DEFAULT_FILE, 1, 1), value=1)
+        assert unary == Number(
+            value=1,
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 2),
+            ),
+        )
 
     def test_unary_with_negative_number(self) -> None:
         parser = Parser(DEFAULT_FILE, "-1")
         unary = parser._unary()
         assert unary == UnaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
             operator=UnaryOperator.NEGATIVE,
-            value=Number(location=Location(DEFAULT_FILE, 1, 2), value=1),
+            value=Number(
+                value=1,
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 2),
+                    end=Position(1, 3),
+                ),
+            ),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 3),
+            ),
         )
 
     def test_term_with_multiplication(self) -> None:
         parser = Parser(DEFAULT_FILE, "1 * 2")
         term = parser._multiplicative()
         assert term == BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
-            left=Number(location=Location(DEFAULT_FILE, 1, 1), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 5), value=2),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 6),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 5),
+                    end=Position(1, 6),
+                ),
+                value=2,
+            ),
             operator=ArithmeticOperator.MULTIPLY,
         )
 
     def test_term_with_number(self) -> None:
         parser = Parser(DEFAULT_FILE, "1")
         term = parser._multiplicative()
-        assert term == Number(location=Location(DEFAULT_FILE, 1, 1), value=1)
+        assert term == Number(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 2),
+            ),
+            value=1,
+        )
 
     def test_term_with_multiple_operations(self) -> None:
         parser = Parser(DEFAULT_FILE, "1 * 2 / 3 % 4")
         term = parser._multiplicative()
         expected_term = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
-            left=Number(location=Location(DEFAULT_FILE, 1, 1), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 5), value=2),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 6),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 5),
+                    end=Position(1, 6),
+                ),
+                value=2,
+            ),
             operator=ArithmeticOperator.MULTIPLY,
         )
         expected_term = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 10),
+            ),
             left=expected_term,
-            right=Number(location=Location(DEFAULT_FILE, 1, 9), value=3),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 9),
+                    end=Position(1, 10),
+                ),
+                value=3,
+            ),
             operator=ArithmeticOperator.DIVIDE,
         )
         expected_term = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 14),
+            ),
             left=expected_term,
-            right=Number(location=Location(DEFAULT_FILE, 1, 13), value=4),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 13),
+                    end=Position(1, 14),
+                ),
+                value=4,
+            ),
             operator=ArithmeticOperator.MODULO,
         )
         assert term == expected_term
@@ -112,36 +216,101 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "1 + 2")
         expression = parser._expression()
         assert expression == BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
-            left=Number(location=Location(DEFAULT_FILE, 1, 1), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 5), value=2),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 6),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 5),
+                    end=Position(1, 6),
+                ),
+                value=2,
+            ),
             operator=ArithmeticOperator.ADD,
         )
 
     def test_expression_with_number(self) -> None:
         parser = Parser(DEFAULT_FILE, "1")
         expression = parser._expression()
-        assert expression == Number(location=Location(DEFAULT_FILE, 1, 1), value=1)
+        assert expression == Number(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 2),
+            ),
+            value=1,
+        )
 
     def test_expression_with_multiple_operations(self) -> None:
         parser = Parser(DEFAULT_FILE, "1 + 2 * 3 - 4")
         expression = parser._expression()
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 5),
-            left=Number(location=Location(DEFAULT_FILE, 1, 5), value=2),
-            right=Number(location=Location(DEFAULT_FILE, 1, 9), value=3),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 5),
+                end=Position(1, 10),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 5),
+                    end=Position(1, 6),
+                ),
+                value=2,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 9),
+                    end=Position(1, 10),
+                ),
+                value=3,
+            ),
             operator=ArithmeticOperator.MULTIPLY,
         )
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
-            left=Number(location=Location(DEFAULT_FILE, 1, 1), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 10),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                value=1,
+            ),
             right=expected_expression,
             operator=ArithmeticOperator.ADD,
         )
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 14),
+            ),
             left=expected_expression,
-            right=Number(location=Location(DEFAULT_FILE, 1, 13), value=4),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 13),
+                    end=Position(1, 14),
+                ),
+                value=4,
+            ),
             operator=ArithmeticOperator.SUBTRACT,
         )
         assert expression == expected_expression
@@ -170,12 +339,24 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "-(1)")
         expression = parser._expression()
         assert expression == UnaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 5),
+            ),
             operator=UnaryOperator.NEGATIVE,
             value=ParentheseExpression(
-                location=Location(DEFAULT_FILE, 1, 2),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 2),
+                    end=Position(1, 5),
+                ),
                 value=Number(
-                    location=Location(DEFAULT_FILE, 1, 3),
+                    location=Location(
+                        DEFAULT_FILE,
+                        start=Position(1, 3),
+                        end=Position(1, 4),
+                    ),
                     value=1,
                 ),
             ),
@@ -186,40 +367,80 @@ class TestParser:
         expression = parser._expression()
 
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 7),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 7),
+                end=Position(1, 12),
+            ),
             left=Number(
-                location=Location(DEFAULT_FILE, 1, 7),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 7),
+                    end=Position(1, 8),
+                ),
                 value=2,
             ),
             operator=ArithmeticOperator.SUBTRACT,
             right=Number(
-                location=Location(DEFAULT_FILE, 1, 11),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 11),
+                    end=Position(1, 12),
+                ),
                 value=3,
             ),
         )
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 2),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 2),
+                end=Position(1, 13),
+            ),
             left=Number(
-                location=Location(DEFAULT_FILE, 1, 2),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 2),
+                    end=Position(1, 3),
+                ),
                 value=1,
             ),
             operator=ArithmeticOperator.ADD,
             right=ParentheseExpression(
-                location=Location(DEFAULT_FILE, 1, 6),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 6),
+                    end=Position(1, 13),
+                ),
                 value=expected_expression,
             ),
         )
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 20),
+            ),
             left=ParentheseExpression(
-                location=Location(DEFAULT_FILE, 1, 1),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 14),
+                ),
                 value=expected_expression,
             ),
             operator=ArithmeticOperator.MULTIPLY,
             right=ParentheseExpression(
-                location=Location(DEFAULT_FILE, 1, 17),
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 17),
+                    end=Position(1, 20),
+                ),
                 value=Number(
-                    location=Location(DEFAULT_FILE, 1, 18),
+                    location=Location(
+                        DEFAULT_FILE,
+                        start=Position(1, 18),
+                        end=Position(1, 19),
+                    ),
                     value=4,
                 ),
             ),
@@ -230,9 +451,27 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "1 == 1")
         comparison = parser._expression()
         assert comparison == Comparison(
-            location=Location(DEFAULT_FILE, 1, 1),
-            left=Number(location=Location(DEFAULT_FILE, 1, 1), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 6), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 7),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 6),
+                    end=Position(1, 7),
+                ),
+                value=1,
+            ),
             operator=ComparisonOperator.EQUAL,
         )
 
@@ -240,21 +479,61 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "1 > 2 == 3 < 4")
         comparison = parser._expression()
         expected_comparison = Comparison(
-            location=Location(DEFAULT_FILE, 1, 1),
-            left=Number(location=Location(DEFAULT_FILE, 1, 1), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 5), value=2),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 6),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 5),
+                    end=Position(1, 6),
+                ),
+                value=2,
+            ),
             operator=ComparisonOperator.GREATER,
         )
         expected_comparison = Comparison(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 11),
+            ),
             left=expected_comparison,
-            right=Number(location=Location(DEFAULT_FILE, 1, 10), value=3),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 10),
+                    end=Position(1, 11),
+                ),
+                value=3,
+            ),
             operator=ComparisonOperator.EQUAL,
         )
         expected_comparison = Comparison(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 15),
+            ),
             left=expected_comparison,
-            right=Number(location=Location(DEFAULT_FILE, 1, 14), value=4),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 14),
+                    end=Position(1, 15),
+                ),
+                value=4,
+            ),
             operator=ComparisonOperator.LESS,
         )
         assert comparison == expected_comparison
@@ -267,7 +546,13 @@ class TestParser:
     def test_empty_block(self) -> None:
         parser = Parser(DEFAULT_FILE, "{}")
         block = parser._block()
-        assert block == Block(location=Location(DEFAULT_FILE, 1, 1))
+        assert block == Block(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 3),
+            ),
+        )
 
     def test_block_missing_open_brace(self) -> None:
         parser = Parser(DEFAULT_FILE, "print 1}")
@@ -282,20 +567,55 @@ class TestParser:
     def test_nested_blocks(self) -> None:
         parser = Parser(DEFAULT_FILE, "{{{}\n}\n}")
         block = parser._block()
-        expected_block = Block(location=Location(DEFAULT_FILE, 1, 3))
-        expected_block = Block(location=Location(DEFAULT_FILE, 1, 2), statements=[expected_block])
-        expected_block = Block(location=Location(DEFAULT_FILE, 1, 1), statements=[expected_block])
+        expected_block = Block(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 3),
+                end=Position(1, 5),
+            ),
+        )
+        expected_block = Block(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 2),
+                end=Position(2, 2),
+            ),
+            statements=[expected_block],
+        )
+        expected_block = Block(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(3, 2),
+            ),
+            statements=[expected_block],
+        )
         assert block == expected_block
 
     def test_block_with_newline(self) -> None:
         parser = Parser(DEFAULT_FILE, "\n\n{\n\n\nprint 1\n\n}\n")
         block = parser._block()
         expected_statement = Print(
-            location=Location(DEFAULT_FILE, 6, 1),
-            value=Number(location=Location(DEFAULT_FILE, 6, 7), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(6, 1),
+                end=Position(6, 8),
+            ),
+            value=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(6, 7),
+                    end=Position(6, 8),
+                ),
+                value=1,
+            ),
         )
         assert block == Block(
-            location=Location(DEFAULT_FILE, 3, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(3, 1),
+                end=Position(8, 2),
+            ),
             statements=[expected_statement],
         )
 
@@ -308,85 +628,233 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "if 1 == 1 {}")
         statement = parser._statement()
         expected_comparison = Comparison(
-            location=Location(DEFAULT_FILE, 1, 4),
-            left=Number(location=Location(DEFAULT_FILE, 1, 4), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 9), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 4),
+                end=Position(1, 10),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 4),
+                    end=Position(1, 5),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 9),
+                    end=Position(1, 10),
+                ),
+                value=1,
+            ),
             operator=ComparisonOperator.EQUAL,
         )
         assert statement == If(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 13),
+            ),
             condition=expected_comparison,
-            block=Block(location=Location(DEFAULT_FILE, 1, 11)),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 11),
+                    end=Position(1, 13),
+                ),
+            ),
         )
 
     def test_while_statement(self) -> None:
         parser = Parser(DEFAULT_FILE, "while 1 != 1 {}")
         statement = parser._statement()
         expected_comparison = Comparison(
-            location=Location(DEFAULT_FILE, 1, 7),
-            left=Number(location=Location(DEFAULT_FILE, 1, 7), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 12), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 7),
+                end=Position(1, 13),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 7),
+                    end=Position(1, 8),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 12),
+                    end=Position(1, 13),
+                ),
+                value=1,
+            ),
             operator=ComparisonOperator.NOT_EQUAL,
         )
         assert statement == While(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 16),
+            ),
             condition=expected_comparison,
-            block=Block(location=Location(DEFAULT_FILE, 1, 14)),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 14),
+                    end=Position(1, 16),
+                ),
+            ),
         )
 
-    def input_statement(self) -> None:
+    def teste_input_statement(self) -> None:
         parser = Parser(DEFAULT_FILE, "input x")
         statement = parser._statement()
         assert statement == Input(
-            location=Location(DEFAULT_FILE, 1, 1),
-            identifier=Identifier(location=Location(DEFAULT_FILE, 1, 7), name="x"),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 8),
+            ),
+            identifier=Identifier(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 7),
+                    end=Position(1, 8),
+                ),
+                name="x",
+            ),
         )
 
     def test_print_statement_with_string(self) -> None:
         parser = Parser(DEFAULT_FILE, 'print "hello"')
         statement = parser._statement()
         assert statement == Print(
-            location=Location(DEFAULT_FILE, 1, 1),
-            value=String(location=Location(DEFAULT_FILE, 1, 7), value="hello"),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 14),
+            ),
+            value=String(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 7),
+                    end=Position(1, 14),
+                ),
+                value="hello",
+            ),
         )
 
     def test_print_statement_with_expression(self) -> None:
         parser = Parser(DEFAULT_FILE, "print 1 + 1")
         statement = parser._statement()
         expected_expression = BinaryExpression(
-            location=Location(DEFAULT_FILE, 1, 7),
-            left=Number(location=Location(DEFAULT_FILE, 1, 7), value=1),
-            right=Number(location=Location(DEFAULT_FILE, 1, 11), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 7),
+                end=Position(1, 12),
+            ),
+            left=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 7),
+                    end=Position(1, 8),
+                ),
+                value=1,
+            ),
+            right=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 11),
+                    end=Position(1, 12),
+                ),
+                value=1,
+            ),
             operator=ArithmeticOperator.ADD,
         )
-        assert statement == Print(location=Location(DEFAULT_FILE, 1, 1), value=expected_expression)
+        assert statement == Print(
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 12),
+            ),
+            value=expected_expression,
+        )
 
     def test_declaration_statement_with_value(self) -> None:
         parser = Parser(DEFAULT_FILE, "{let x = 1\n}")
         block = parser._block()
         expected_statement = Declaration(
-            location=Location(DEFAULT_FILE, 1, 2),
-            identifier=Identifier(location=Location(DEFAULT_FILE, 1, 6), name="x"),
-            expression=Number(location=Location(DEFAULT_FILE, 1, 10), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 2),
+                end=Position(1, 11),
+            ),
+            identifier=Identifier(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 6),
+                    end=Position(1, 7),
+                ),
+                name="x",
+            ),
+            expression=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 10),
+                    end=Position(1, 11),
+                ),
+                value=1,
+            ),
         )
         assert block == Block(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(2, 2),
+            ),
             statements=[expected_statement],
-            symbol_table=SymbolTable({"x": Location(DEFAULT_FILE, 1, 2)}),
+            symbol_table=SymbolTable(
+                {
+                    "x": Location(DEFAULT_FILE, start=Position(1, 6), end=Position(1, 7)),
+                },
+            ),
         )
 
     def test_declaration_statement_without_value(self) -> None:
         parser = Parser(DEFAULT_FILE, "{let x\n}")
         block = parser._block()
         expected_statement = Declaration(
-            location=Location(DEFAULT_FILE, 1, 2),
-            identifier=Identifier(location=Location(DEFAULT_FILE, 1, 6), name="x"),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 2),
+                end=Position(1, 7),
+            ),
+            identifier=Identifier(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 6),
+                    end=Position(1, 7),
+                ),
+                name="x",
+            ),
             expression=None,
         )
         assert block == Block(
-            location=Location(DEFAULT_FILE, 1, 1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(2, 2),
+            ),
             statements=[expected_statement],
-            symbol_table=SymbolTable({"x": Location(DEFAULT_FILE, 1, 2)}),
+            symbol_table=SymbolTable(
+                {
+                    "x": Location(DEFAULT_FILE, start=Position(1, 6), end=Position(1, 7)),
+                },
+            ),
         )
 
     def test_declaration_statement_missing_identifier(self) -> None:
@@ -403,9 +871,27 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "x = 1")
         statement = parser._statement()
         assert statement == Assignment(
-            location=Location(DEFAULT_FILE, 1, 1),
-            identifier=Identifier(location=Location(DEFAULT_FILE, 1, 1), name="x"),
-            expression=Number(location=Location(DEFAULT_FILE, 1, 5), value=1),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 6),
+            ),
+            identifier=Identifier(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 2),
+                ),
+                name="x",
+            ),
+            expression=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 5),
+                    end=Position(1, 6),
+                ),
+                value=1,
+            ),
         )
 
     def test_assignment_statement_missing_value(self) -> None:
@@ -427,8 +913,18 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "{}")
         program = parser._program()
         assert program == Program(
-            location=Location(DEFAULT_FILE, 0, 0),
-            block=Block(location=Location(DEFAULT_FILE, 1, 1)),
+            location=Location(
+                DEFAULT_FILE,
+                start=Position(1, 1),
+                end=Position(1, 3),
+            ),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    start=Position(1, 1),
+                    end=Position(1, 3),
+                ),
+            ),
         )
 
     def test_programm_with_empty_DEFAULT_FILE(self) -> None:

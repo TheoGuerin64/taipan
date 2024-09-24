@@ -3,10 +3,14 @@ from pathlib import Path
 import pytest
 
 from taipan.symbol_table import SymbolTable, TaipanSemanticError
-from taipan.utils import Location
+from taipan.utils import Location, Position
 
 TP_FILE = Path("file.tp")
-LOCATION = Location(TP_FILE, 1, 1)
+LOCATION = Location(
+    TP_FILE,
+    start=Position(line=1, column=1),
+    end=Position(line=1, column=2),
+)
 
 
 class TestSymbolTable:

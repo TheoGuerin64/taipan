@@ -5,7 +5,13 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
-class Location:
-    file: Path
+class Position:
     line: int
     column: int
+
+
+@dataclass(frozen=True)
+class Location:
+    file: Path
+    start: Position
+    end: Position

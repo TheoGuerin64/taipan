@@ -27,9 +27,9 @@ from taipan.ast import (
 from taipan.exceptions import TaipanSyntaxError
 from taipan.lexer import Lexer, Token, TokenKind
 from taipan.symbol_table import SymbolTable
-from taipan.utils import Location
+from taipan.utils import Location, Position
 
-INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), -1, -1))
+INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), Position(-1, -1), Position(-1, -1)))
 
 
 class Parser:
@@ -63,9 +63,10 @@ class Parser:
         self.peek_token = self.lexer.next_token()
 
     def _program(self) -> Program:
+        block = self._block()
         return Program(
-            block=self._block(),
-            location=Location(self.lexer.file, 0, 0),
+            block=block,
+            location=block.location,
         )
 
     def _block(self) -> Block:
@@ -74,59 +75,90 @@ class Parser:
         return self._block_statement()
 
     def _expression(self) -> Expression:
-        node = self._additive()
+        left = self._additive()
         while operator := ComparisonOperator.from_token(self.current_token):
             self._next_token()
-            node = Comparison(
-                left=node,
-                right=self._additive(),
-                operator=operator,
-                location=node.location,
+
+            right = self._additive()
+            location = Location(
+                file=left.location.file,
+                start=left.location.start,
+                end=right.location.end,
             )
 
-        return node
+            left = Comparison(
+                left=left,
+                right=right,
+                operator=operator,
+                location=location,
+            )
+
+        return left
 
     def _additive(
         self,
     ) -> Number | Identifier | ParentheseExpression | UnaryExpression | BinaryExpression:
-        node = self._multiplicative()
+        left = self._multiplicative()
         while operator := ArithmeticOperator.additive_from_token(self.current_token):
             self._next_token()
-            node = BinaryExpression(
-                left=node,
-                right=self._multiplicative(),
-                operator=operator,
-                location=node.location,
+
+            right = self._multiplicative()
+            location = Location(
+                file=left.location.file,
+                start=left.location.start,
+                end=right.location.end,
             )
 
-        return node
+            left = BinaryExpression(
+                left=left,
+                right=right,
+                operator=operator,
+                location=location,
+            )
+
+        return left
 
     def _multiplicative(
         self,
     ) -> Number | Identifier | ParentheseExpression | UnaryExpression | BinaryExpression:
-        node = self._unary()
+        left = self._unary()
         while operator := ArithmeticOperator.multiplicative_from_token(self.current_token):
             self._next_token()
-            node = BinaryExpression(
-                left=node,
-                right=self._unary(),
-                operator=operator,
-                location=node.location,
+
+            right = self._unary()
+            location = Location(
+                file=left.location.file,
+                start=left.location.start,
+                end=right.location.end,
             )
 
-        return node
+            left = BinaryExpression(
+                left=left,
+                right=right,
+                operator=operator,
+                location=location,
+            )
+
+        return left
 
     def _unary(self) -> Number | Identifier | ParentheseExpression | UnaryExpression:
         operator = UnaryOperator.from_token(self.current_token)
         if operator is None:
             return self._parentheses()
 
-        location = self.current_token.location
+        start_position = self.current_token.location.start
         self._next_token()
+
+        value = self._parentheses()
+        location = Location(
+            self.current_token.location.file,
+            start_position,
+            value.location.end,
+        )
 
         return UnaryExpression(
             operator=operator,
-            value=self._parentheses(),
+            value=value,
             location=location,
         )
 
@@ -134,16 +166,33 @@ class Parser:
         if self.current_token.kind != TokenKind.OPEN_PARENTHESE:
             return self._literal()
 
-        location = self.current_token.location
+        start_position = self.current_token.location.start
         self._next_token()
 
-        node = ParentheseExpression(
-            location=location,
-            value=self._expression(),
+        value = self._expression()
+        location = Location(
+            self.current_token.location.file,
+            start_position,
+            self.current_token.location.end,
         )
-        self._match_token(TokenKind.CLOSE_PARENTHESE)
 
-        return node
+        self._match_token(TokenKind.CLOSE_PARENTHESE)
+        return ParentheseExpression(
+            location=location,
+            value=value,
+        )
+
+    def _literal(self) -> Number | Identifier:
+        match self.current_token.kind:
+            case TokenKind.NUMBER:
+                return self._number()
+            case TokenKind.IDENTIFIER:
+                return self._identifier()
+            case _:
+                raise TaipanSyntaxError(
+                    self.current_token.location,
+                    f"Expected literal, got {self.current_token.kind}",
+                )
 
     def _number(self) -> Number:
         assert isinstance(self.current_token.value, float)
@@ -165,66 +214,84 @@ class Parser:
         self._next_token()
         return node
 
-    def _literal(self) -> Number | Identifier:
-        match self.current_token.kind:
-            case TokenKind.NUMBER:
-                return self._number()
-            case TokenKind.IDENTIFIER:
-                return self._identifier()
-            case _:
-                raise TaipanSyntaxError(
-                    self.current_token.location,
-                    f"Expected literal, got {self.current_token.kind}",
-                )
-
     def _block_statement(self) -> Block:
-        block = Block(location=self.current_token.location)
-        self.symbol_tables.append(block.symbol_table)
-
+        start_position = self.current_token.location.start
         self._next_token()
         self._skip_nl()
 
+        symbol_table = SymbolTable()
+        self.symbol_tables.append(symbol_table)
+
+        statements = []
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
-            block.statements.append(self._statement())
+            statements.append(self._statement())
             self._nl()
+
+        location = Location(
+            file=self.current_token.location.file,
+            start=start_position,
+            end=self.current_token.location.end,
+        )
         self._next_token()
 
         self.symbol_tables.pop()
-        return block
+
+        return Block(
+            statements=statements,
+            symbol_table=symbol_table,
+            location=location,
+        )
 
     def _if_statement(self) -> If:
-        location = self.current_token.location
-
+        start_position = self.current_token.location.start
         self._next_token()
+
+        expression = self._expression()
+        block = self._block()
         return If(
-            condition=self._expression(),
-            block=self._block(),
-            location=location,
+            condition=expression,
+            block=block,
+            location=Location(
+                file=self.current_token.location.file,
+                start=start_position,
+                end=block.location.end,
+            ),
         )
 
     def _while_statement(self) -> While:
-        location = self.current_token.location
-
+        start_position = self.current_token.location.start
         self._next_token()
+
+        expression = self._expression()
+        block = self._block()
         return While(
-            condition=self._expression(),
-            block=self._block(),
-            location=location,
+            condition=expression,
+            block=block,
+            location=Location(
+                file=self.current_token.location.file,
+                start=start_position,
+                end=block.location.end,
+            ),
         )
 
     def _input_statement(self) -> Input:
-        location = self.current_token.location
-
+        start_position = self.current_token.location.start
         self._next_token()
+
+        identifier = self._identifier()
         return Input(
-            identifier=self._identifier(),
-            location=location,
+            identifier=identifier,
+            location=Location(
+                file=self.current_token.location.file,
+                start=start_position,
+                end=identifier.location.end,
+            ),
         )
 
     def _print_statement(self) -> Print:
-        location = self.current_token.location
-
+        start_position = self.current_token.location.start
         self._next_token()
+
         match self.current_token.kind:
             case TokenKind.STRING:
                 assert isinstance(self.current_token.value, str)
@@ -236,10 +303,17 @@ class Parser:
             case _:
                 value = self._expression()
 
-        return Print(value=value, location=location)
+        return Print(
+            value=value,
+            location=Location(
+                file=self.current_token.location.file,
+                start=start_position,
+                end=value.location.end,
+            ),
+        )
 
     def _declaration_statement(self) -> Declaration:
-        location = self.current_token.location
+        start_position = self.current_token.location.start
 
         self._next_token()
         if self.current_token.kind != TokenKind.IDENTIFIER:
@@ -247,24 +321,41 @@ class Parser:
                 self.current_token.location,
                 f"Expected identifier, got {self.current_token.kind}",
             )
+
         identifier = self._identifier()
-        self.symbol_tables[-1].define(identifier.name, location)
+        self.symbol_tables[-1].define(identifier.name, identifier.location)
 
         if self.current_token.kind == TokenKind.ASSIGNMENT:
             self._next_token()
             expression = self._expression()
+            end_position = expression.location.end
         else:
             expression = None
+            end_position = identifier.location.end
 
-        return Declaration(identifier=identifier, expression=expression, location=location)
+        return Declaration(
+            identifier=identifier,
+            expression=expression,
+            location=Location(
+                file=self.current_token.location.file,
+                start=start_position,
+                end=end_position,
+            ),
+        )
 
     def _assignment_statement(self) -> Assignment:
         identifier = self._identifier()
         self._match_token(TokenKind.ASSIGNMENT)
+        expression = self._expression()
+
         return Assignment(
             identifier=identifier,
-            expression=self._expression(),
-            location=identifier.location,
+            expression=expression,
+            location=Location(
+                file=self.current_token.location.file,
+                start=identifier.location.start,
+                end=expression.location.end,
+            ),
         )
 
     def _statement(self) -> Statement:

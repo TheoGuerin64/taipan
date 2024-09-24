@@ -28,7 +28,7 @@ def _is_defined(symbol_tables: deque[SymbolTable], identifier: Identifier) -> bo
         symbol = table.lookup(identifier.name)
         if not symbol:
             continue
-        if identifier.location.line > symbol.line:
+        if identifier.location.start.line > symbol.start.line:
             return True
     return False
 
