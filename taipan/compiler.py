@@ -16,6 +16,7 @@ def _find_clang() -> Path:
     clang = shutil.which("clang")
     if clang is None:
         raise TaipanCompilationError("clang not found in PATH")
+
     return Path(clang)
 
 
@@ -24,6 +25,7 @@ def _find_clang_format() -> Path | None:
     if clang_format is None:
         print("clang-format not found in PATH", file=sys.stderr)
         return None
+
     return Path(clang_format)
 
 

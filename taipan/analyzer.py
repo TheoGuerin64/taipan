@@ -30,6 +30,7 @@ def _is_defined(symbol_tables: deque[SymbolTable], identifier: Identifier) -> bo
             continue
         if identifier.location.start.line > symbol.start.line:
             return True
+
     return False
 
 

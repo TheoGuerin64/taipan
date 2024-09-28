@@ -81,9 +81,9 @@ class Parser:
 
             right = self._additive()
             location = Location(
-                file=left.location.file,
-                start=left.location.start,
-                end=right.location.end,
+                left.location.file,
+                left.location.start,
+                right.location.end,
             )
 
             left = Comparison(
@@ -104,9 +104,9 @@ class Parser:
 
             right = self._multiplicative()
             location = Location(
-                file=left.location.file,
-                start=left.location.start,
-                end=right.location.end,
+                left.location.file,
+                left.location.start,
+                right.location.end,
             )
 
             left = BinaryExpression(
@@ -127,9 +127,9 @@ class Parser:
 
             right = self._unary()
             location = Location(
-                file=left.location.file,
-                start=left.location.start,
-                end=right.location.end,
+                left.location.file,
+                left.location.start,
+                right.location.end,
             )
 
             left = BinaryExpression(
@@ -178,8 +178,8 @@ class Parser:
 
         self._match_token(TokenKind.CLOSE_PARENTHESE)
         return ParentheseExpression(
-            location=location,
             value=value,
+            location=location,
         )
 
     def _literal(self) -> Number | Identifier:
@@ -228,9 +228,9 @@ class Parser:
             self._nl()
 
         location = Location(
-            file=self.current_token.location.file,
-            start=start_position,
-            end=self.current_token.location.end,
+            self.current_token.location.file,
+            start_position,
+            self.current_token.location.end,
         )
         self._next_token()
 
@@ -252,9 +252,9 @@ class Parser:
             condition=expression,
             block=block,
             location=Location(
-                file=self.current_token.location.file,
-                start=start_position,
-                end=block.location.end,
+                self.current_token.location.file,
+                start_position,
+                block.location.end,
             ),
         )
 
@@ -268,9 +268,9 @@ class Parser:
             condition=expression,
             block=block,
             location=Location(
-                file=self.current_token.location.file,
-                start=start_position,
-                end=block.location.end,
+                self.current_token.location.file,
+                start_position,
+                block.location.end,
             ),
         )
 
@@ -282,9 +282,9 @@ class Parser:
         return Input(
             identifier=identifier,
             location=Location(
-                file=self.current_token.location.file,
-                start=start_position,
-                end=identifier.location.end,
+                self.current_token.location.file,
+                start_position,
+                identifier.location.end,
             ),
         )
 
@@ -306,9 +306,9 @@ class Parser:
         return Print(
             value=value,
             location=Location(
-                file=self.current_token.location.file,
-                start=start_position,
-                end=value.location.end,
+                self.current_token.location.file,
+                start_position,
+                value.location.end,
             ),
         )
 
@@ -337,9 +337,9 @@ class Parser:
             identifier=identifier,
             expression=expression,
             location=Location(
-                file=self.current_token.location.file,
-                start=start_position,
-                end=end_position,
+                self.current_token.location.file,
+                start_position,
+                end_position,
             ),
         )
 
@@ -352,9 +352,9 @@ class Parser:
             identifier=identifier,
             expression=expression,
             location=Location(
-                file=self.current_token.location.file,
-                start=identifier.location.start,
-                end=expression.location.end,
+                self.current_token.location.file,
+                identifier.location.start,
+                expression.location.end,
             ),
         )
 

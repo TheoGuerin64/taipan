@@ -118,9 +118,9 @@ class Lexer:
 
     def _get_location(self, size: int) -> Location:
         return Location(
-            file=self.file,
-            start=Position(self.line, self.column),
-            end=Position(self.line, self.column + size),
+            self.file,
+            Position(self.line, self.column),
+            Position(self.line, self.column + size),
         )
 
     def _get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
