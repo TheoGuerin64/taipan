@@ -49,7 +49,7 @@ class Token:
     value: str | float | None = None
 
 
-ONE_CHAR_TOKEN = {
+ONE_CHAR_TOKEN_KIND = {
     "\n": TokenKind.NEWLINE,
     "+": TokenKind.PLUS,
     "-": TokenKind.MINUS,
@@ -62,14 +62,14 @@ ONE_CHAR_TOKEN = {
     ")": TokenKind.CLOSE_PARENTHESE,
 }
 
-TWO_CHAR_TOKEN = {
+TWO_CHAR_TOKEN_KIND = {
     "=": ("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT),
     "!": ("=", TokenKind.NOT_EQUAL, TokenKind.NOT),
     "<": ("=", TokenKind.LESS_EQUAL, TokenKind.LESS),
     ">": ("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER),
 }
 
-KEYWORDS_KIND = {
+KEYWORD_TOKEN_KIND = {
     "if": TokenKind.IF,
     "while": TokenKind.WHILE,
     "input": TokenKind.INPUT,
@@ -212,7 +212,7 @@ class Lexer:
             Position(self.line, self.column + 1),
         )
 
-        if keyword_kind := KEYWORDS_KIND.get(identifier):
+        if keyword_kind := KEYWORD_TOKEN_KIND.get(identifier):
             return Token(keyword_kind, location)
 
         if len(identifier) > 32:
@@ -227,10 +227,10 @@ class Lexer:
             case "\0":
                 location = self._get_location(0)
                 token = Token(TokenKind.EOF, location)
-            case char if token_kind := ONE_CHAR_TOKEN.get(char):
+            case char if token_kind := ONE_CHAR_TOKEN_KIND.get(char):
                 location = self._get_location(1)
                 token = Token(token_kind, location)
-            case char if token_info := TWO_CHAR_TOKEN.get(char):
+            case char if token_info := TWO_CHAR_TOKEN_KIND.get(char):
                 token = self._get_two_char_token(*token_info)
             case '"':
                 token = self._get_string_token()
