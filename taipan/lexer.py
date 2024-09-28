@@ -116,22 +116,12 @@ class Lexer:
             while self.char != "\n":
                 self._read_char()
 
-    def _get_eof(self) -> Token:
-        actual_position = Position(self.line, self.column)
-        location = Location(
-            file=self.file,
-            start=actual_position,
-            end=actual_position,
-        )
-        return Token(TokenKind.EOF, location)
-
-    def _get_one_char_token(self, kind: TokenKind) -> Token:
-        location = Location(
+    def _get_location(self, size: int) -> Location:
+        return Location(
             file=self.file,
             start=Position(self.line, self.column),
-            end=Position(self.line, self.column + 1),
+            end=Position(self.line, self.column + size),
         )
-        return Token(kind, location)
 
     def _get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
         start_position = Position(self.line, self.column)
@@ -142,6 +132,9 @@ class Lexer:
                 start_position,
                 Position(self.line, self.column + 1),
             )
+
+            if if_next == TokenKind.NOT:
+                raise TaipanSyntaxError(location, "Expected '!='")
             return Token(otherwise, location)
 
         self._read_char()
@@ -233,9 +226,11 @@ class Lexer:
 
         match self.char:
             case "\0":
-                token = self._get_eof()
+                location = self._get_location(0)
+                token = Token(TokenKind.EOF, location)
             case char if token_kind := ONE_CHAR_TOKEN.get(char):
-                token = self._get_one_char_token(token_kind)
+                location = self._get_location(1)
+                token = Token(token_kind, location)
             case char if token_info := TWO_CHAR_TOKEN.get(char):
                 token = self._get_two_char_token(*token_info)
             case '"':
@@ -245,11 +240,7 @@ class Lexer:
             case char if char.isalpha() or char == "_":
                 token = self._get_identifier_token()
             case other:
-                location = Location(
-                    self.file,
-                    Position(self.line, self.column),
-                    Position(self.line, self.column + 1),
-                )
+                location = self._get_location(1)
                 raise TaipanSyntaxError(location, f"Got unexpected token: {other!r}")
 
         self._read_char()
