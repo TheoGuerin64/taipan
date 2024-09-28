@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from taipan.exceptions import TaipanSemanticError
-from taipan.utils import Location
+from taipan.location import Location
 
 
 @dataclass

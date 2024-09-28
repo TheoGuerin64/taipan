@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from taipan.lexer import Token, TokenKind
+from taipan.location import Location
 from taipan.symbol_table import SymbolTable
-from taipan.utils import Location
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)

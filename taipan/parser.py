@@ -26,8 +26,8 @@ from taipan.ast import (
 )
 from taipan.exceptions import TaipanSyntaxError
 from taipan.lexer import Lexer, Token, TokenKind
+from taipan.location import Location, Position
 from taipan.symbol_table import SymbolTable
-from taipan.utils import Location, Position
 
 INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), Position(-1, -1), Position(-1, -1)))
 

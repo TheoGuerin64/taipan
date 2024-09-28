@@ -23,9 +23,9 @@ from taipan.ast import (
     While,
 )
 from taipan.exceptions import TaipanSyntaxError
+from taipan.location import Location, Position
 from taipan.parser import Parser
 from taipan.symbol_table import SymbolTable
-from taipan.utils import Location, Position
 
 DEFAULT_FILE = Path("file.tp")
 

@@ -6,7 +6,7 @@ from typing import IO, Any
 import click
 from click._compat import get_text_stderr
 
-from taipan.utils import Location
+from taipan.location import Location
 
 
 class TaipanError(click.ClickException):

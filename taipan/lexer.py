@@ -3,7 +3,7 @@ from enum import Enum, auto
 from pathlib import Path
 
 from taipan.exceptions import TaipanFileError, TaipanSyntaxError
-from taipan.utils import Location, Position
+from taipan.location import Location, Position
 
 
 class TokenKind(Enum):

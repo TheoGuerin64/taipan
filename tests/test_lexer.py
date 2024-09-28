@@ -4,7 +4,7 @@ import pytest
 
 from taipan.exceptions import TaipanFileError, TaipanSyntaxError
 from taipan.lexer import Lexer, Token, TokenKind
-from taipan.utils import Location, Position
+from taipan.location import Location, Position
 
 DEFAULT_FILE = Path("file.tp")
 
