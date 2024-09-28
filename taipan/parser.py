@@ -248,13 +248,33 @@ class Parser:
 
         expression = self._expression()
         block = self._block()
+
+        if self.current_token.kind != TokenKind.ELSE:
+            return If(
+                condition=expression,
+                block=block,
+                else_=None,
+                location=Location(
+                    self.current_token.location.file,
+                    start_position,
+                    block.location.end,
+                ),
+            )
+        self._next_token()
+
+        if self.current_token.kind == TokenKind.IF:
+            else_ = self._if_statement()
+        else:
+            else_ = self._block()
+
         return If(
             condition=expression,
             block=block,
+            else_=else_,
             location=Location(
                 self.current_token.location.file,
                 start_position,
-                block.location.end,
+                else_.location.end,
             ),
         )
 

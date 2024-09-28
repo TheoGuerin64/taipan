@@ -20,6 +20,7 @@ class TokenKind(Enum):
     CLOSE_PARENTHESE = auto()
 
     IF = auto()
+    ELSE = auto()
     WHILE = auto()
     DECLARATION = auto()
     ASSIGNMENT = auto()
@@ -71,6 +72,7 @@ TWO_CHAR_TOKEN_KIND = {
 
 KEYWORD_TOKEN_KIND = {
     "if": TokenKind.IF,
+    "else": TokenKind.ELSE,
     "while": TokenKind.WHILE,
     "input": TokenKind.INPUT,
     "print": TokenKind.PRINT,

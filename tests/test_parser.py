@@ -667,6 +667,222 @@ class TestParser:
             ),
         )
 
+    def test_if_statement_with_else(self) -> None:
+        parser = Parser(DEFAULT_FILE, "if 1 {} else {}")
+        statement = parser._statement()
+        assert statement == If(
+            location=Location(
+                DEFAULT_FILE,
+                Position(1, 1),
+                Position(1, 16),
+            ),
+            condition=Number(
+                value=1,
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 4),
+                    Position(1, 5),
+                ),
+            ),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 6),
+                    Position(1, 8),
+                ),
+            ),
+            else_=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 14),
+                    Position(1, 16),
+                ),
+            ),
+        )
+
+    def test_if_statement_with_else_if(self) -> None:
+        parser = Parser(DEFAULT_FILE, "if (1 - 1) {} else if 1 {}")
+        statement = parser._statement()
+        assert statement == If(
+            location=Location(
+                DEFAULT_FILE,
+                Position(1, 1),
+                Position(1, 27),
+            ),
+            condition=ParentheseExpression(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 4),
+                    Position(1, 11),
+                ),
+                value=BinaryExpression(
+                    location=Location(
+                        DEFAULT_FILE,
+                        Position(1, 5),
+                        Position(1, 10),
+                    ),
+                    left=Number(
+                        location=Location(
+                            DEFAULT_FILE,
+                            Position(1, 5),
+                            Position(1, 6),
+                        ),
+                        value=1,
+                    ),
+                    right=Number(
+                        location=Location(
+                            DEFAULT_FILE,
+                            Position(1, 9),
+                            Position(1, 10),
+                        ),
+                        value=1,
+                    ),
+                    operator=ArithmeticOperator.SUBTRACT,
+                ),
+            ),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 12),
+                    Position(1, 14),
+                ),
+            ),
+            else_=If(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 20),
+                    Position(1, 27),
+                ),
+                condition=Number(
+                    location=Location(
+                        DEFAULT_FILE,
+                        Position(1, 23),
+                        Position(1, 24),
+                    ),
+                    value=1,
+                ),
+                block=Block(
+                    location=Location(
+                        DEFAULT_FILE,
+                        Position(1, 25),
+                        Position(1, 27),
+                    ),
+                ),
+                else_=None,
+            ),
+        )
+
+    def test_if_statement_with_else_if_else_with_newlines(self) -> None:
+        parser = Parser(
+            DEFAULT_FILE, "if 1 {\nprint 1\n} else if 1 {\nprint 2\n} else {\nprint 3\n}"
+        )
+        statement = parser._statement()
+
+        expected_else = Block(
+            location=Location(
+                DEFAULT_FILE,
+                Position(5, 8),
+                Position(7, 2),
+            ),
+            statements=[
+                Print(
+                    location=Location(
+                        DEFAULT_FILE,
+                        Position(6, 1),
+                        Position(6, 8),
+                    ),
+                    value=Number(
+                        location=Location(
+                            DEFAULT_FILE,
+                            Position(6, 7),
+                            Position(6, 8),
+                        ),
+                        value=3,
+                    ),
+                ),
+            ],
+        )
+        expected_else_if = If(
+            location=Location(
+                DEFAULT_FILE,
+                Position(3, 8),
+                Position(7, 2),
+            ),
+            condition=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(3, 11),
+                    Position(3, 12),
+                ),
+                value=1,
+            ),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(3, 13),
+                    Position(5, 2),
+                ),
+                statements=[
+                    Print(
+                        location=Location(
+                            DEFAULT_FILE,
+                            Position(4, 1),
+                            Position(4, 8),
+                        ),
+                        value=Number(
+                            location=Location(
+                                DEFAULT_FILE,
+                                Position(4, 7),
+                                Position(4, 8),
+                            ),
+                            value=2,
+                        ),
+                    ),
+                ],
+            ),
+            else_=expected_else,
+        )
+        assert statement == If(
+            location=Location(
+                DEFAULT_FILE,
+                Position(1, 1),
+                Position(7, 2),
+            ),
+            condition=Number(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 4),
+                    Position(1, 5),
+                ),
+                value=1,
+            ),
+            block=Block(
+                location=Location(
+                    DEFAULT_FILE,
+                    Position(1, 6),
+                    Position(3, 2),
+                ),
+                statements=[
+                    Print(
+                        location=Location(
+                            DEFAULT_FILE,
+                            Position(2, 1),
+                            Position(2, 8),
+                        ),
+                        value=Number(
+                            location=Location(
+                                DEFAULT_FILE,
+                                Position(2, 7),
+                                Position(2, 8),
+                            ),
+                            value=1,
+                        ),
+                    ),
+                ],
+            ),
+            else_=expected_else_if,
+        )
+
     def test_while_statement(self) -> None:
         parser = Parser(DEFAULT_FILE, "while 1 != 1 {}")
         statement = parser._statement()

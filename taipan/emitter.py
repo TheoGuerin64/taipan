@@ -37,7 +37,7 @@ class Emitter:
         return self._emit_header() + self._emit_main(code)
 
     def _emit_main(self, code: str) -> str:
-        return f"int main(){{{code}return 0;}}\n"
+        return f"int main(){code}\n"
 
     def _emit_header(self) -> str:
         header = ""
@@ -58,15 +58,19 @@ class Emitter:
                 for statement in statement.statements:
                     code += self._emit_statement(statement)
 
-                return code
+                return f"{{{code}}}"
             case If():
                 condition = self._emit_expression(statement.condition)
                 block = self._emit_statement(statement.block)
-                return f"if({condition}){{{block}}}"
+
+                code = f"if({condition}){block}"
+                if statement.else_:
+                    code += f"else {self._emit_statement(statement.else_)}"
+                return code
             case While():
                 condition = self._emit_expression(statement.condition)
                 block = self._emit_statement(statement.block)
-                return f"while({condition}){{{block}}}"
+                return f"while({condition}){block}"
             case Input():
                 return self._emit_function(Functions.input, identifier=statement.identifier.name)
             case Print():

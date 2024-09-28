@@ -149,6 +149,7 @@ class Block(Statement):
 class If(Statement):
     condition: Expression
     block: Block
+    else_: If | Block | None = None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
