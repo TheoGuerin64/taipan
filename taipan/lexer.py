@@ -193,6 +193,8 @@ class Lexer:
             case "let":
                 return Token(TokenKind.DECLARATION, location)
             case name:
+                if len(name) > 32:
+                    raise TaipanSyntaxError(location, "Identifier is too long")
                 return Token(TokenKind.IDENTIFIER, location, name)
 
     def next_token(self) -> Token:
