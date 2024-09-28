@@ -927,7 +927,7 @@ class TestParser:
             ),
         )
 
-    def test_programm_with_empty_DEFAULT_FILE(self) -> None:
+    def test_programm_with_empty_program(self) -> None:
         parser = Parser(DEFAULT_FILE, "")
         with pytest.raises(TaipanSyntaxError):
             parser._program()
