@@ -57,7 +57,7 @@ class Analyzer:
             case Print():
                 match statement.value:
                     case String():
-                        pass
+                        pass  # No need to analyze string
                     case Expression():
                         self._analyze_expression(statement.value)
                     case _:
@@ -66,14 +66,14 @@ class Analyzer:
                 self._analyze_expression(statement.identifier)
                 self._analyze_expression(statement.expression)
             case Declaration():
-                pass
+                pass  # No need to analyze declaration
             case _:
                 assert False, statement
 
     def _analyze_expression(self, expression: Expression) -> None:
         match expression:
             case Number():
-                pass
+                pass  # No need to analyze number
             case Identifier():
                 if not _is_defined(self.symbol_tables, expression):
                     raise TaipanSemanticError(
