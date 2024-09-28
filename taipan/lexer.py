@@ -49,6 +49,27 @@ class Token:
     value: str | float | None = None
 
 
+ONE_CHAR_TOKEN = {
+    "\n": TokenKind.NEWLINE,
+    "+": TokenKind.PLUS,
+    "-": TokenKind.MINUS,
+    "*": TokenKind.MULTIPLICATION,
+    "/": TokenKind.DIVISION,
+    "%": TokenKind.MODULO,
+    "{": TokenKind.OPEN_BRACE,
+    "}": TokenKind.CLOSE_BRACE,
+    "(": TokenKind.OPEN_PARENTHESE,
+    ")": TokenKind.CLOSE_PARENTHESE,
+}
+
+TWO_CHAR_TOKEN = {
+    "=": ("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT),
+    "!": ("=", TokenKind.NOT_EQUAL, TokenKind.NOT),
+    "<": ("=", TokenKind.LESS_EQUAL, TokenKind.LESS),
+    ">": ("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER),
+}
+
+
 class Lexer:
     def __init__(self, input_: Path, raw_source: str | None = None) -> None:
         if raw_source is None:
@@ -95,11 +116,20 @@ class Lexer:
             while self.char != "\n":
                 self._read_char()
 
-    def _get_one_char_token(self, kind: TokenKind, size: int = 1) -> Token:
+    def _get_eof(self) -> Token:
+        actual_position = Position(self.line, self.column)
+        location = Location(
+            file=self.file,
+            start=actual_position,
+            end=actual_position,
+        )
+        return Token(TokenKind.EOF, location)
+
+    def _get_one_char_token(self, kind: TokenKind) -> Token:
         location = Location(
             file=self.file,
             start=Position(self.line, self.column),
-            end=Position(self.line, self.column + size),
+            end=Position(self.line, self.column + 1),
         )
         return Token(kind, location)
 
@@ -203,35 +233,11 @@ class Lexer:
 
         match self.char:
             case "\0":
-                token = self._get_one_char_token(TokenKind.EOF, 0)
-            case "\n":
-                token = self._get_one_char_token(TokenKind.NEWLINE)
-            case "+":
-                token = self._get_one_char_token(TokenKind.PLUS)
-            case "-":
-                token = self._get_one_char_token(TokenKind.MINUS)
-            case "*":
-                token = self._get_one_char_token(TokenKind.MULTIPLICATION)
-            case "/":
-                token = self._get_one_char_token(TokenKind.DIVISION)
-            case "%":
-                token = self._get_one_char_token(TokenKind.MODULO)
-            case "{":
-                token = self._get_one_char_token(TokenKind.OPEN_BRACE)
-            case "}":
-                token = self._get_one_char_token(TokenKind.CLOSE_BRACE)
-            case "(":
-                token = self._get_one_char_token(TokenKind.OPEN_PARENTHESE)
-            case ")":
-                token = self._get_one_char_token(TokenKind.CLOSE_PARENTHESE)
-            case "=":
-                token = self._get_two_char_token("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT)
-            case "!":
-                token = self._get_two_char_token("=", TokenKind.NOT_EQUAL, TokenKind.NOT)
-            case "<":
-                token = self._get_two_char_token("=", TokenKind.LESS_EQUAL, TokenKind.LESS)
-            case ">":
-                token = self._get_two_char_token("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER)
+                token = self._get_eof()
+            case char if token_kind := ONE_CHAR_TOKEN.get(char):
+                token = self._get_one_char_token(token_kind)
+            case char if token_info := TWO_CHAR_TOKEN.get(char):
+                token = self._get_two_char_token(*token_info)
             case '"':
                 token = self._get_string_token()
             case char if char.isdigit() or char == ".":
