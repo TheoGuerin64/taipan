@@ -80,7 +80,7 @@ class Emitter:
 
                 return self._emit_function(Functions.print, value=value)
             case Declaration():
-                indentifier = statement.identifier.name
+                identifier = statement.identifier.name
                 match statement.expression:
                     case None:
                         expression = "0.0"
@@ -89,7 +89,7 @@ class Emitter:
                     case _:
                         assert False, statement.expression
 
-                return f"double {indentifier}={expression};"
+                return f"double {identifier}={expression};"
             case Assignment():
                 identifier = statement.identifier.name
                 expression = self._emit_expression(statement.expression)
