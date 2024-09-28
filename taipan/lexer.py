@@ -51,9 +51,6 @@ class Token:
 
 class Lexer:
     def __init__(self, input_: Path, raw_source: str | None = None) -> None:
-        if input_.suffix != ".tp":
-            raise TaipanFileError(input_, "File must have a .tp extension")
-
         if raw_source is None:
             try:
                 raw_source = input_.read_text()

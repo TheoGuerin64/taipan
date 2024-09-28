@@ -28,13 +28,6 @@ class TestLexer:
             ),
         )
 
-    def test_invalid_extension(self, tmp_path: Path) -> None:
-        file = tmp_path / "file.txt"
-        file.touch()
-
-        with pytest.raises(TaipanFileError):
-            Lexer(file)
-
     def test_missing_permissions(self, tmp_path: Path) -> None:
         file = tmp_path / "file.tp"
         file.touch()
