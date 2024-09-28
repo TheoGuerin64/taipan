@@ -69,6 +69,14 @@ TWO_CHAR_TOKEN = {
     ">": ("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER),
 }
 
+KEYWORDS_KIND = {
+    "if": TokenKind.IF,
+    "while": TokenKind.WHILE,
+    "input": TokenKind.INPUT,
+    "print": TokenKind.PRINT,
+    "let": TokenKind.DECLARATION,
+}
+
 
 class Lexer:
     def __init__(self, input_: Path, raw_source: str | None = None) -> None:
@@ -204,21 +212,12 @@ class Lexer:
             Position(self.line, self.column + 1),
         )
 
-        match identifier:
-            case "if":
-                return Token(TokenKind.IF, location)
-            case "while":
-                return Token(TokenKind.WHILE, location)
-            case "input":
-                return Token(TokenKind.INPUT, location)
-            case "print":
-                return Token(TokenKind.PRINT, location)
-            case "let":
-                return Token(TokenKind.DECLARATION, location)
-            case name:
-                if len(name) > 32:
-                    raise TaipanSyntaxError(location, "Identifier is too long")
-                return Token(TokenKind.IDENTIFIER, location, name)
+        if keyword_kind := KEYWORDS_KIND.get(identifier):
+            return Token(keyword_kind, location)
+
+        if len(identifier) > 32:
+            raise TaipanSyntaxError(location, "Identifier is too long")
+        return Token(TokenKind.IDENTIFIER, location, identifier)
 
     def next_token(self) -> Token:
         self._skip_whitespaces()
