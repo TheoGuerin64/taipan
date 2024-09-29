@@ -32,7 +32,6 @@ class TokenKind(Enum):
     MINUS = auto()
     MULTIPLICATION = auto()
     DIVISION = auto()
-    MODULO = auto()
 
     NOT = auto()
     EQUAL = auto()
@@ -56,7 +55,6 @@ ONE_CHAR_TOKEN_KIND = {
     "-": TokenKind.MINUS,
     "*": TokenKind.MULTIPLICATION,
     "/": TokenKind.DIVISION,
-    "%": TokenKind.MODULO,
     "{": TokenKind.OPEN_BRACE,
     "}": TokenKind.CLOSE_BRACE,
     "(": TokenKind.OPEN_PARENTHESE,

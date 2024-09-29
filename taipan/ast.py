@@ -92,8 +92,6 @@ class ArithmeticOperator(StrEnum):
                 return ArithmeticOperator.MULTIPLY
             case TokenKind.DIVISION:
                 return ArithmeticOperator.DIVIDE
-            case TokenKind.MODULO:
-                return ArithmeticOperator.MODULO
             case _:
                 return None
 

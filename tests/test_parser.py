@@ -145,7 +145,7 @@ class TestParser:
         )
 
     def test_term_with_multiple_operations(self) -> None:
-        parser = Parser(DEFAULT_FILE, "1 * 2 / 3 % 4")
+        parser = Parser(DEFAULT_FILE, "1 * 2 / 3")
         term = parser._multiplicative()
         expected_term = BinaryExpression(
             location=Location(
@@ -187,23 +187,6 @@ class TestParser:
                 value=3,
             ),
             operator=ArithmeticOperator.DIVIDE,
-        )
-        expected_term = BinaryExpression(
-            location=Location(
-                DEFAULT_FILE,
-                start=Position(1, 1),
-                end=Position(1, 14),
-            ),
-            left=expected_term,
-            right=Number(
-                location=Location(
-                    DEFAULT_FILE,
-                    start=Position(1, 13),
-                    end=Position(1, 14),
-                ),
-                value=4,
-            ),
-            operator=ArithmeticOperator.MODULO,
         )
         assert term == expected_term
 
