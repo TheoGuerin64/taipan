@@ -33,7 +33,6 @@ class TokenKind(Enum):
     MULTIPLICATION = auto()
     DIVISION = auto()
 
-    NOT = auto()
     EQUAL = auto()
     NOT_EQUAL = auto()
     LESS = auto()
@@ -63,7 +62,7 @@ ONE_CHAR_TOKEN_KIND = {
 
 TWO_CHAR_TOKEN_KIND = {
     "=": ("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT),
-    "!": ("=", TokenKind.NOT_EQUAL, TokenKind.NOT),
+    "!": ("=", TokenKind.NOT_EQUAL, None),
     "<": ("=", TokenKind.LESS_EQUAL, TokenKind.LESS),
     ">": ("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER),
 }
@@ -131,18 +130,21 @@ class Lexer:
             Position(self.line, self.column + size),
         )
 
-    def _get_two_char_token(self, next: str, if_next: TokenKind, otherwise: TokenKind) -> Token:
+    def _get_two_char_token(
+        self, next: str, if_next: TokenKind, otherwise: TokenKind | None
+    ) -> Token:
         start_position = Position(self.line, self.column)
 
-        if self._peek_char() != next:
+        peek = self._peek_char()
+        if peek != next:
             location = Location(
                 self.file,
                 start_position,
                 Position(self.line, self.column + 1),
             )
 
-            if if_next == TokenKind.NOT:
-                raise TaipanSyntaxError(location, "Expected '!='")
+            if not otherwise:
+                raise TaipanSyntaxError(location, f"Got unexpected token: {peek!r}")
             return Token(otherwise, location)
 
         self._read_char()
