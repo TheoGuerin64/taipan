@@ -1112,11 +1112,6 @@ class TestParser:
         parser = Parser(DEFAULT_FILE, "{}")
         program = parser._program()
         assert program == Program(
-            location=Location(
-                DEFAULT_FILE,
-                start=Position(1, 1),
-                end=Position(1, 3),
-            ),
             block=Block(
                 location=Location(
                     DEFAULT_FILE,

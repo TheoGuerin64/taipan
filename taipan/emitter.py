@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, assert_never
 
 from taipan.ast import (
     AST,
@@ -79,8 +79,8 @@ class Emitter:
                         value = self._emit_string(statement.value)
                     case Expression():
                         value = self._emit_expression(statement.value)
-                    case _:
-                        assert False, statement.value
+                    case other:
+                        assert_never(other)
 
                 return self._emit_function(Functions.print, value=value)
             case Declaration():
@@ -90,8 +90,8 @@ class Emitter:
                         expression = "0.0"
                     case Expression():
                         expression = self._emit_expression(statement.expression)
-                    case _:
-                        assert False, statement.expression
+                    case other:
+                        assert_never(other)
 
                 return f"double {identifier}={expression};"
             case Assignment():

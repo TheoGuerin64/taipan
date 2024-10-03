@@ -178,8 +178,8 @@ class Assignment(Statement):
     expression: Expression
 
 
-@dataclass(kw_only=True, frozen=True, repr=False)
-class Program(Statement):
+@dataclass
+class Program:
     block: Block
 
 

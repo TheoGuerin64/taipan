@@ -63,11 +63,7 @@ class Parser:
         self.peek_token = self.lexer.next_token()
 
     def _program(self) -> Program:
-        block = self._block()
-        return Program(
-            block=block,
-            location=block.location,
-        )
+        return Program(self._block())
 
     def _block(self) -> Block:
         self._skip_nl()

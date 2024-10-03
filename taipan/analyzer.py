@@ -1,4 +1,5 @@
 from collections import deque
+from typing import assert_never
 
 from taipan.ast import (
     AST,
@@ -61,8 +62,8 @@ class Analyzer:
                         pass  # No need to analyze string
                     case Expression():
                         self._analyze_expression(statement.value)
-                    case _:
-                        assert False, statement.value
+                    case other:
+                        assert_never(other)
             case Assignment():
                 self._analyze_expression(statement.identifier)
                 self._analyze_expression(statement.expression)
