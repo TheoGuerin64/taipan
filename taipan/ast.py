@@ -11,6 +11,7 @@ type ExpressionType = (
     Identifier | Number | ParentheseExpression | UnaryExpression | BinaryExpression | Comparison
 )
 type StatementType = Block | If | While | Input | Print | Declaration | Assignment
+type LiteralType = String | Number
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
