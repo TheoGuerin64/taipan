@@ -10,7 +10,7 @@ from taipan.ast import (
     Comparison,
     ComparisonOperator,
     Declaration,
-    Expression,
+    ExpressionType,
     Identifier,
     If,
     Input,
@@ -18,7 +18,7 @@ from taipan.ast import (
     ParentheseExpression,
     Print,
     Program,
-    Statement,
+    StatementType,
     String,
     UnaryExpression,
     UnaryOperator,
@@ -70,7 +70,7 @@ class Parser:
         self._expect_token(TokenKind.OPEN_BRACE)
         return self._block_statement()
 
-    def _expression(self) -> Expression:
+    def _expression(self) -> ExpressionType:
         left = self._additive()
         while operator := ComparisonOperator.from_token(self.current_token):
             self._next_token()
@@ -374,7 +374,7 @@ class Parser:
             ),
         )
 
-    def _statement(self) -> Statement:
+    def _statement(self) -> StatementType:
         match self.current_token.kind:
             case TokenKind.OPEN_BRACE:
                 return self._block_statement()

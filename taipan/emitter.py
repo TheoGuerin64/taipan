@@ -8,6 +8,7 @@ from taipan.ast import (
     Comparison,
     Declaration,
     Expression,
+    ExpressionType,
     Identifier,
     If,
     Input,
@@ -15,7 +16,7 @@ from taipan.ast import (
     ParentheseExpression,
     Print,
     Program,
-    Statement,
+    StatementType,
     String,
     UnaryExpression,
     While,
@@ -51,7 +52,7 @@ class Emitter:
         self.libraries.update(libraries)
         return code
 
-    def _emit_statement(self, statement: Statement) -> str:
+    def _emit_statement(self, statement: StatementType) -> str:
         match statement:
             case Block():
                 code = ""
@@ -98,10 +99,10 @@ class Emitter:
                 identifier = statement.identifier.name
                 expression = self._emit_expression(statement.expression)
                 return f"{identifier}={expression};"
-            case _:
-                assert False, statement
+            case other:
+                assert_never(other)
 
-    def _emit_expression(self, expression: Expression) -> str:
+    def _emit_expression(self, expression: ExpressionType) -> str:
         match expression:
             case Number():
                 return str(expression.value)
@@ -117,8 +118,8 @@ class Emitter:
                 )
             case ParentheseExpression():
                 return f"({self._emit_expression(expression.value)})"
-            case _:
-                assert False, expression
+            case other:
+                assert_never(other)
 
     def _emit_string(self, string: String) -> str:
         return f'"{string.value}"'

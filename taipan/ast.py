@@ -7,6 +7,11 @@ from taipan.lexer import Token, TokenKind
 from taipan.location import Location
 from taipan.symbol_table import SymbolTable
 
+type ExpressionType = (
+    Identifier | Number | ParentheseExpression | UnaryExpression | BinaryExpression | Comparison
+)
+type StatementType = Block | If | While | Input | Print | Declaration | Assignment
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Node:
@@ -44,7 +49,7 @@ class Identifier(Expression):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class ParentheseExpression(Expression):
-    value: Expression
+    value: ExpressionType
 
 
 class UnaryOperator(StrEnum):
@@ -98,8 +103,8 @@ class ArithmeticOperator(StrEnum):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class BinaryExpression(Expression):
-    left: Expression
-    right: Expression
+    left: ExpressionType
+    right: ExpressionType
     operator: ArithmeticOperator
 
 
@@ -132,27 +137,27 @@ class ComparisonOperator(StrEnum):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Comparison(Expression):
-    left: Expression
-    right: Expression
+    left: ExpressionType
+    right: ExpressionType
     operator: ComparisonOperator
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Block(Statement):
-    statements: list[Statement] = field(default_factory=list)
+    statements: list[StatementType] = field(default_factory=list)
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class If(Statement):
-    condition: Expression
+    condition: ExpressionType
     block: Block
     else_: If | Block | None = None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class While(Statement):
-    condition: Expression
+    condition: ExpressionType
     block: Block
 
 
@@ -163,19 +168,19 @@ class Input(Statement):
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Print(Statement):
-    value: Expression | String
+    value: ExpressionType | String
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Declaration(Statement):
     identifier: Identifier
-    expression: Expression | None
+    expression: ExpressionType | None
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Assignment(Statement):
     identifier: Identifier
-    expression: Expression
+    expression: ExpressionType
 
 
 @dataclass

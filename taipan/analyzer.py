@@ -9,13 +9,14 @@ from taipan.ast import (
     Comparison,
     Declaration,
     Expression,
+    ExpressionType,
     Identifier,
     If,
     Input,
     Number,
     ParentheseExpression,
     Print,
-    Statement,
+    StatementType,
     String,
     UnaryExpression,
     While,
@@ -44,7 +45,7 @@ class Analyzer:
         analyzer = cls()
         analyzer._analyze_statement(ast.root.block)
 
-    def _analyze_statement(self, statement: Statement) -> None:
+    def _analyze_statement(self, statement: StatementType) -> None:
         match statement:
             case Block():
                 self.symbol_tables.append(statement.symbol_table)
@@ -69,10 +70,10 @@ class Analyzer:
                 self._analyze_expression(statement.expression)
             case Declaration():
                 pass  # No need to analyze declaration
-            case _:
-                assert False, statement
+            case other:
+                assert_never(other)
 
-    def _analyze_expression(self, expression: Expression) -> None:
+    def _analyze_expression(self, expression: ExpressionType) -> None:
         match expression:
             case Number():
                 pass  # No need to analyze number
@@ -88,5 +89,5 @@ class Analyzer:
                 self._analyze_expression(expression.right)
             case ParentheseExpression():
                 self._analyze_expression(expression.value)
-            case _:
-                assert False, expression
+            case other:
+                assert_never(other)
