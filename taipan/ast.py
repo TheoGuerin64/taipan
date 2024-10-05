@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
 
 from taipan.lexer import Token, TokenKind
 from taipan.location import Location
 from taipan.symbol_table import SymbolTable
+from taipan.visitor import Visitor
 
 type ExpressionType = (
     Identifier | Number | ParentheseExpression | UnaryExpression | BinaryExpression | Comparison
@@ -15,8 +17,11 @@ type LiteralType = String | Number
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
-class Node:
+class Node(ABC):
     location: Location
+
+    @abstractmethod
+    def accept(self, visitor: Visitor) -> None: ...
 
     def __repr__(self) -> str:
         return self.__class__.__name__
@@ -36,21 +41,29 @@ class Literal[T](Node):
 
 
 class String(Literal[str]):
-    pass
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_string(self)
 
 
 class Number(Literal[float], Expression):
-    pass
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_number(self)
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Identifier(Expression):
     name: str
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_identifier(self)
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class ParentheseExpression(Expression):
     value: ExpressionType
+
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_parenthese_expression(self)
 
 
 class UnaryOperator(StrEnum):
@@ -72,6 +85,9 @@ class UnaryOperator(StrEnum):
 class UnaryExpression(Expression):
     value: Identifier | Number | ParentheseExpression
     operator: UnaryOperator
+
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_unary_expression(self)
 
 
 class ArithmeticOperator(StrEnum):
@@ -108,6 +124,9 @@ class BinaryExpression(Expression):
     right: ExpressionType
     operator: ArithmeticOperator
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_binary_expression(self)
+
 
 class ComparisonOperator(StrEnum):
     EQUAL = "=="
@@ -142,11 +161,17 @@ class Comparison(Expression):
     right: ExpressionType
     operator: ComparisonOperator
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_comparison(self)
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Block(Statement):
     statements: list[StatementType] = field(default_factory=list)
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
+
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_block(self)
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -155,21 +180,33 @@ class If(Statement):
     block: Block
     else_: If | Block | None = None
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_if(self)
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class While(Statement):
     condition: ExpressionType
     block: Block
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_while(self)
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Input(Statement):
     identifier: Identifier
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_input(self)
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Print(Statement):
     value: ExpressionType | String
+
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_print(self)
 
 
 @dataclass(kw_only=True, frozen=True, repr=False)
@@ -177,11 +214,17 @@ class Declaration(Statement):
     identifier: Identifier
     expression: ExpressionType | None
 
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_declaration(self)
+
 
 @dataclass(kw_only=True, frozen=True, repr=False)
 class Assignment(Statement):
     identifier: Identifier
     expression: ExpressionType
+
+    def accept(self, visitor: Visitor) -> None:
+        visitor.visit_assignment(self)
 
 
 @dataclass

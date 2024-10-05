@@ -1,5 +1,0 @@
-{% if value is string and value.startswith('"') %}
-    puts({{ value }});
-{% else %}
-    printf("%lf\n", {{ value }});
-{% endif %}

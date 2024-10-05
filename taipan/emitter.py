@@ -1,4 +1,4 @@
-from typing import Any, assert_never
+from typing import assert_never
 
 from taipan.ast import (
     AST,
@@ -8,118 +8,119 @@ from taipan.ast import (
     Comparison,
     Declaration,
     Expression,
-    ExpressionType,
     Identifier,
     If,
     Input,
     Number,
     ParentheseExpression,
     Print,
-    Program,
-    StatementType,
     String,
     UnaryExpression,
     While,
 )
-from taipan.templates.functions import Functions
+from taipan.visitor import Visitor
 
 
-class Emitter:
+class Emitter(Visitor):
     def __init__(self) -> None:
         self.libraries = set[str]()
+        self.code = ""
 
     @classmethod
     def emit(cls, ast: AST) -> str:
         emitter = cls()
-        return emitter._emit_program(ast.root)
+        emitter.visit_block(ast.root.block)
 
-    def _emit_program(self, program: Program) -> str:
-        code = self._emit_statement(program.block)
-        return self._emit_header() + self._emit_main(code)
-
-    def _emit_main(self, code: str) -> str:
-        return f"int main(){code}\n"
-
-    def _emit_header(self) -> str:
         header = ""
-        for library in self.libraries:
+        for library in emitter.libraries:
             header += f"#include<{library}>\n"
 
-        return header
+        return header + f"int main(){emitter.code}\n"
 
-    def _emit_function(self, function: Functions, **args: Any) -> str:
-        code, libraries = function.render(**args)
-        self.libraries.update(libraries)
-        return code
+    def visit_string(self, string: String) -> None:
+        self.code += f'"{string.value}"'
 
-    def _emit_statement(self, statement: StatementType) -> str:
-        match statement:
-            case Block():
-                code = ""
-                for statement in statement.statements:
-                    code += self._emit_statement(statement)
+    def visit_number(self, number: Number) -> None:
+        self.code += str(number.value)
 
-                return f"{{{code}}}"
-            case If():
-                condition = self._emit_expression(statement.condition)
-                block = self._emit_statement(statement.block)
+    def visit_identifier(self, identifier: Identifier) -> None:
+        self.code += identifier.name
 
-                code = f"if({condition}){block}"
-                if statement.else_:
-                    code += f"else {self._emit_statement(statement.else_)}"
-                return code
-            case While():
-                condition = self._emit_expression(statement.condition)
-                block = self._emit_statement(statement.block)
-                return f"while({condition}){block}"
-            case Input():
-                return self._emit_function(Functions.input, identifier=statement.identifier.name)
-            case Print():
-                match statement.value:
-                    case String():
-                        value = self._emit_string(statement.value)
-                    case Expression():
-                        value = self._emit_expression(statement.value)
-                    case other:
-                        assert_never(other)
+    def visit_parenthese_expression(self, parenthese_expression: ParentheseExpression) -> None:
+        self.code += "("
+        parenthese_expression.value.accept(self)
+        self.code += ")"
 
-                return self._emit_function(Functions.print, value=value)
-            case Declaration():
-                identifier = statement.identifier.name
-                match statement.expression:
-                    case None:
-                        expression = "0.0"
-                    case Expression():
-                        expression = self._emit_expression(statement.expression)
-                    case other:
-                        assert_never(other)
+    def visit_unary_expression(self, unary_expression: UnaryExpression) -> None:
+        self.code += unary_expression.operator.value
+        unary_expression.value.accept(self)
 
-                return f"double {identifier}={expression};"
-            case Assignment():
-                identifier = statement.identifier.name
-                expression = self._emit_expression(statement.expression)
-                return f"{identifier}={expression};"
+    def visit_binary_expression(self, binary_expression: BinaryExpression) -> None:
+        binary_expression.left.accept(self)
+        self.code += binary_expression.operator.value
+        binary_expression.right.accept(self)
+
+    def visit_comparison(self, comparison: Comparison) -> None:
+        comparison.left.accept(self)
+        self.code += comparison.operator.value
+        comparison.right.accept(self)
+
+    def visit_block(self, block: Block) -> None:
+        self.code += "{"
+        for statement in block.statements:
+            statement.accept(self)
+        self.code += "}"
+
+    def visit_if(self, if_: If) -> None:
+        self.code += "if("
+        if_.condition.accept(self)
+        self.code += ")"
+        if_.block.accept(self)
+        if if_.else_:
+            self.code += "else "
+            if_.else_.accept(self)
+
+    def visit_while(self, while_: While) -> None:
+        self.code += "while("
+        while_.condition.accept(self)
+        self.code += ")"
+        while_.block.accept(self)
+
+    def visit_input(self, input_: Input) -> None:
+        self.libraries.add("stdio.h")
+
+        self.code += 'if (!scanf("%lf", &'
+        input_.identifier.accept(self)
+        self.code += "))"
+        input_.identifier.accept(self)
+        self.code += " = 0;"
+
+    def visit_print(self, print_: Print) -> None:
+        self.libraries.add("stdio.h")
+
+        match print_.value:
+            case String():
+                self.code += "puts("
+            case Expression():
+                self.code += 'printf("%lf\\n",'
             case other:
                 assert_never(other)
 
-    def _emit_expression(self, expression: ExpressionType) -> str:
-        match expression:
-            case Number():
-                return str(expression.value)
-            case Identifier():
-                return expression.name
-            case UnaryExpression():
-                return expression.operator.value + self._emit_expression(expression.value)
-            case BinaryExpression() | Comparison():
-                return (
-                    self._emit_expression(expression.left)
-                    + expression.operator.value
-                    + self._emit_expression(expression.right)
-                )
-            case ParentheseExpression():
-                return f"({self._emit_expression(expression.value)})"
-            case other:
-                assert_never(other)
+        print_.value.accept(self)
+        self.code += ");"
 
-    def _emit_string(self, string: String) -> str:
-        return f'"{string.value}"'
+    def visit_declaration(self, declaration: Declaration) -> None:
+        self.code += "double "
+        declaration.identifier.accept(self)
+        self.code += "="
+        if declaration.expression:
+            declaration.expression.accept(self)
+        else:
+            self.code += "0.0"
+        self.code += ";"
+
+    def visit_assignment(self, assignment: Assignment) -> None:
+        assignment.identifier.accept(self)
+        self.code += "="
+        assignment.expression.accept(self)
+        self.code += ";"
