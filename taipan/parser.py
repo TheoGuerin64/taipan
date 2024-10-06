@@ -218,7 +218,7 @@ class Parser:
         symbol_table = SymbolTable()
         self.symbol_tables.append(symbol_table)
 
-        statements = []
+        statements = list[StatementType]()
         while self.current_token.kind != TokenKind.CLOSE_BRACE:
             statements.append(self._statement())
             self._nl()

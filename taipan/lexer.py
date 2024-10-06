@@ -120,6 +120,7 @@ class Lexer:
 
     def _skip_comments(self) -> None:
         if self.char == "#":
+            self._read_char()
             while self.char != "\n":
                 self._read_char()
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import IO, Any
+from typing import IO, Any, override
 
 import click
 from click._compat import get_text_stderr
@@ -15,6 +15,7 @@ class TaipanError(click.ClickException):
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
+    @override
     def show(self, file: IO[Any] | None = None) -> None:
         if file is None:
             file = get_text_stderr()

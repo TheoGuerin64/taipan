@@ -33,5 +33,28 @@ line-length = 100
 ban-relative-imports = "all"
 
 [tool.pyright]
+include = ["taipan/", "tests/"]
 venvPath = "."
 venv = ".venv"
+
+typeCheckingMode = "strict"
+deprecateTypingAliases = true
+analyzeUnannotatedFunctions = false
+reportImplicitOverride = "error"
+reportImplicitStringConcatenation = "error"
+reportPropertyTypeMismatch = "error"
+reportShadowedImports = "error"
+reportUninitializedInstanceVariable = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnknownParameterType = "error"
+reportUnknownArgumentType = "error"
+reportUnknownLambdaType = "error"
+reportUnknownVariableType = "error"
+reportUnknownMemberType = "error"
+reportMissingParameterType = "error"
+reportMissingTypeArgument = "error"
+reportUnnecessaryComparison = "none"
+
+executionEnvironments = [
+    { root = "tests/", extraPaths = ["./"], reportPrivateUsage = false},
+]

@@ -1,4 +1,5 @@
 from collections import deque
+from typing import override
 
 from taipan.ast import (
     AST,
@@ -31,16 +32,19 @@ class Analyzer(Visitor):
         analyzer = cls()
         analyzer.visit_block(ast.root.block)
 
+    @override
     def visit_identifier(self, identifier: Identifier) -> None:
         if not _is_defined(self.symbol_tables, identifier):
             raise TaipanSemanticError(
                 identifier.location, f"Identifier '{identifier.name}' is not defined"
             )
 
+    @override
     def visit_declaration(self, declaration: Declaration) -> None:
         if declaration.expression:
             declaration.expression.accept(self)
 
+    @override
     def visit_block(self, block: Block) -> None:
         self.symbol_tables.append(block.symbol_table)
         for statement in block.statements:

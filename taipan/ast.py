@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import override
 
 from taipan.lexer import Token, TokenKind
 from taipan.location import Location
@@ -23,6 +24,7 @@ class Node(ABC):
     @abstractmethod
     def accept(self, visitor: Visitor) -> None: ...
 
+    @override
     def __repr__(self) -> str:
         return self.__class__.__name__
 
@@ -41,11 +43,13 @@ class Literal[T](Node):
 
 
 class String(Literal[str]):
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_string(self)
 
 
 class Number(Literal[float], Expression):
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_number(self)
 
@@ -54,6 +58,7 @@ class Number(Literal[float], Expression):
 class Identifier(Expression):
     name: str
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_identifier(self)
 
@@ -62,6 +67,7 @@ class Identifier(Expression):
 class ParentheseExpression(Expression):
     value: ExpressionType
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_parenthese_expression(self)
 
@@ -86,6 +92,7 @@ class UnaryExpression(Expression):
     value: Identifier | Number | ParentheseExpression
     operator: UnaryOperator
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_unary_expression(self)
 
@@ -124,6 +131,7 @@ class BinaryExpression(Expression):
     right: ExpressionType
     operator: ArithmeticOperator
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_binary_expression(self)
 
@@ -161,6 +169,7 @@ class Comparison(Expression):
     right: ExpressionType
     operator: ComparisonOperator
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_comparison(self)
 
@@ -170,6 +179,7 @@ class Block(Statement):
     statements: list[StatementType] = field(default_factory=list)
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_block(self)
 
@@ -180,6 +190,7 @@ class If(Statement):
     block: Block
     else_: If | Block | None = None
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_if(self)
 
@@ -189,6 +200,7 @@ class While(Statement):
     condition: ExpressionType
     block: Block
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_while(self)
 
@@ -197,6 +209,7 @@ class While(Statement):
 class Input(Statement):
     identifier: Identifier
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_input(self)
 
@@ -205,6 +218,7 @@ class Input(Statement):
 class Print(Statement):
     value: ExpressionType | String
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_print(self)
 
@@ -214,6 +228,7 @@ class Declaration(Statement):
     identifier: Identifier
     expression: ExpressionType | None
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_declaration(self)
 
@@ -223,6 +238,7 @@ class Assignment(Statement):
     identifier: Identifier
     expression: ExpressionType
 
+    @override
     def accept(self, visitor: Visitor) -> None:
         visitor.visit_assignment(self)
 

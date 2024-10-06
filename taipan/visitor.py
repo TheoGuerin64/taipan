@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class Visitor:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def visit_string(self, string: String) -> None:
