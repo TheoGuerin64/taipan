@@ -1,6 +1,7 @@
 from collections import deque
 from pathlib import Path
 
+from taipan._lexer import Lexer, Token, TokenKind
 from taipan.ast import (
     AST,
     ArithmeticOperator,
@@ -25,20 +26,19 @@ from taipan.ast import (
     While,
 )
 from taipan.exceptions import TaipanSyntaxError
-from taipan.lexer import Lexer, Token, TokenKind
 from taipan.location import Location, Position
 from taipan.symbol_table import SymbolTable
 
-INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), Position(-1, -1), Position(-1, -1)))
+_INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), Position(-1, -1), Position(-1, -1)))
 
 
 class Parser:
     def __init__(self, input: Path, raw_source: str | None = None) -> None:
-        self.lexer = Lexer(input, raw_source)
-        self.symbol_tables = deque[SymbolTable]()
+        self._lexer = Lexer(input, raw_source)
+        self._symbol_tables = deque[SymbolTable]()
 
-        self.current_token = INVALID_TOKEN
-        self.peek_token = INVALID_TOKEN
+        self._current_token = _INVALID_TOKEN
+        self._peek_token = _INVALID_TOKEN
         self._next_token()
         self._next_token()
 
@@ -48,10 +48,10 @@ class Parser:
         return AST(parser._program())
 
     def _expect_token(self, token_kind: TokenKind) -> None:
-        if self.current_token.kind != token_kind:
+        if self._current_token.kind != token_kind:
             raise TaipanSyntaxError(
-                self.current_token.location,
-                f"Expected {token_kind}, got {self.current_token.kind}",
+                self._current_token.location,
+                f"Expected {token_kind}, got {self._current_token.kind}",
             )
 
     def _match_token(self, token_kind: TokenKind) -> None:
@@ -59,8 +59,8 @@ class Parser:
         self._next_token()
 
     def _next_token(self) -> None:
-        self.current_token = self.peek_token
-        self.peek_token = self.lexer.next_token()
+        self._current_token = self._peek_token
+        self._peek_token = self._lexer.next_token()
 
     def _program(self) -> Program:
         return Program(self._block())
@@ -72,7 +72,7 @@ class Parser:
 
     def _expression(self) -> ExpressionType:
         left = self._additive()
-        while operator := ComparisonOperator.from_token(self.current_token):
+        while operator := ComparisonOperator.from_token(self._current_token):
             self._next_token()
 
             right = self._additive()
@@ -95,7 +95,7 @@ class Parser:
         self,
     ) -> Number | Identifier | ParentheseExpression | UnaryExpression | BinaryExpression:
         left = self._multiplicative()
-        while operator := ArithmeticOperator.additive_from_token(self.current_token):
+        while operator := ArithmeticOperator.additive_from_token(self._current_token):
             self._next_token()
 
             right = self._multiplicative()
@@ -118,7 +118,7 @@ class Parser:
         self,
     ) -> Number | Identifier | ParentheseExpression | UnaryExpression | BinaryExpression:
         left = self._unary()
-        while operator := ArithmeticOperator.multiplicative_from_token(self.current_token):
+        while operator := ArithmeticOperator.multiplicative_from_token(self._current_token):
             self._next_token()
 
             right = self._unary()
@@ -138,16 +138,16 @@ class Parser:
         return left
 
     def _unary(self) -> Number | Identifier | ParentheseExpression | UnaryExpression:
-        operator = UnaryOperator.from_token(self.current_token)
+        operator = UnaryOperator.from_token(self._current_token)
         if operator is None:
             return self._parentheses()
 
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
 
         value = self._parentheses()
         location = Location(
-            self.current_token.location.file,
+            self._current_token.location.file,
             start_position,
             value.location.end,
         )
@@ -159,17 +159,17 @@ class Parser:
         )
 
     def _parentheses(self) -> Number | Identifier | ParentheseExpression:
-        if self.current_token.kind != TokenKind.OPEN_PARENTHESE:
+        if self._current_token.kind != TokenKind.OPEN_PARENTHESE:
             return self._literal()
 
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
 
         value = self._expression()
         location = Location(
-            self.current_token.location.file,
+            self._current_token.location.file,
             start_position,
-            self.current_token.location.end,
+            self._current_token.location.end,
         )
 
         self._match_token(TokenKind.CLOSE_PARENTHESE)
@@ -179,58 +179,58 @@ class Parser:
         )
 
     def _literal(self) -> Number | Identifier:
-        match self.current_token.kind:
+        match self._current_token.kind:
             case TokenKind.NUMBER:
                 return self._number()
             case TokenKind.IDENTIFIER:
                 return self._identifier()
             case _:
                 raise TaipanSyntaxError(
-                    self.current_token.location,
-                    f"Expected literal, got {self.current_token.kind}",
+                    self._current_token.location,
+                    f"Expected literal, got {self._current_token.kind}",
                 )
 
     def _number(self) -> Number:
-        assert isinstance(self.current_token.value, float)
+        assert isinstance(self._current_token.value, float)
         node = Number(
-            value=self.current_token.value,
-            location=self.current_token.location,
+            value=self._current_token.value,
+            location=self._current_token.location,
         )
 
         self._next_token()
         return node
 
     def _identifier(self) -> Identifier:
-        assert isinstance(self.current_token.value, str)
+        assert isinstance(self._current_token.value, str)
         node = Identifier(
-            name=self.current_token.value,
-            location=self.current_token.location,
+            name=self._current_token.value,
+            location=self._current_token.location,
         )
 
         self._next_token()
         return node
 
     def _block_statement(self) -> Block:
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
         self._skip_nl()
 
         symbol_table = SymbolTable()
-        self.symbol_tables.append(symbol_table)
+        self._symbol_tables.append(symbol_table)
 
         statements = list[StatementType]()
-        while self.current_token.kind != TokenKind.CLOSE_BRACE:
+        while self._current_token.kind != TokenKind.CLOSE_BRACE:
             statements.append(self._statement())
             self._nl()
 
         location = Location(
-            self.current_token.location.file,
+            self._current_token.location.file,
             start_position,
-            self.current_token.location.end,
+            self._current_token.location.end,
         )
         self._next_token()
 
-        self.symbol_tables.pop()
+        self._symbol_tables.pop()
 
         return Block(
             statements=statements,
@@ -239,26 +239,26 @@ class Parser:
         )
 
     def _if_statement(self) -> If:
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
 
         expression = self._expression()
         block = self._block()
 
-        if self.current_token.kind != TokenKind.ELSE:
+        if self._current_token.kind != TokenKind.ELSE:
             return If(
                 condition=expression,
                 block=block,
                 else_=None,
                 location=Location(
-                    self.current_token.location.file,
+                    self._current_token.location.file,
                     start_position,
                     block.location.end,
                 ),
             )
         self._next_token()
 
-        if self.current_token.kind == TokenKind.IF:
+        if self._current_token.kind == TokenKind.IF:
             else_ = self._if_statement()
         else:
             else_ = self._block()
@@ -268,14 +268,14 @@ class Parser:
             block=block,
             else_=else_,
             location=Location(
-                self.current_token.location.file,
+                self._current_token.location.file,
                 start_position,
                 else_.location.end,
             ),
         )
 
     def _while_statement(self) -> While:
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
 
         expression = self._expression()
@@ -284,36 +284,36 @@ class Parser:
             condition=expression,
             block=block,
             location=Location(
-                self.current_token.location.file,
+                self._current_token.location.file,
                 start_position,
                 block.location.end,
             ),
         )
 
     def _input_statement(self) -> Input:
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
 
         identifier = self._identifier()
         return Input(
             identifier=identifier,
             location=Location(
-                self.current_token.location.file,
+                self._current_token.location.file,
                 start_position,
                 identifier.location.end,
             ),
         )
 
     def _print_statement(self) -> Print:
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
         self._next_token()
 
-        match self.current_token.kind:
+        match self._current_token.kind:
             case TokenKind.STRING:
-                assert isinstance(self.current_token.value, str)
+                assert isinstance(self._current_token.value, str)
                 value = String(
-                    value=self.current_token.value,
-                    location=self.current_token.location,
+                    value=self._current_token.value,
+                    location=self._current_token.location,
                 )
                 self._next_token()
             case _:
@@ -322,26 +322,26 @@ class Parser:
         return Print(
             value=value,
             location=Location(
-                self.current_token.location.file,
+                self._current_token.location.file,
                 start_position,
                 value.location.end,
             ),
         )
 
     def _declaration_statement(self) -> Declaration:
-        start_position = self.current_token.location.start
+        start_position = self._current_token.location.start
 
         self._next_token()
-        if self.current_token.kind != TokenKind.IDENTIFIER:
+        if self._current_token.kind != TokenKind.IDENTIFIER:
             raise TaipanSyntaxError(
-                self.current_token.location,
-                f"Expected identifier, got {self.current_token.kind}",
+                self._current_token.location,
+                f"Expected identifier, got {self._current_token.kind}",
             )
 
         identifier = self._identifier()
-        self.symbol_tables[-1].define(identifier.name, identifier.location)
+        self._symbol_tables[-1].define(identifier.name, identifier.location)
 
-        if self.current_token.kind == TokenKind.ASSIGNMENT:
+        if self._current_token.kind == TokenKind.ASSIGNMENT:
             self._next_token()
             expression = self._expression()
             end_position = expression.location.end
@@ -353,7 +353,7 @@ class Parser:
             identifier=identifier,
             expression=expression,
             location=Location(
-                self.current_token.location.file,
+                self._current_token.location.file,
                 start_position,
                 end_position,
             ),
@@ -368,14 +368,14 @@ class Parser:
             identifier=identifier,
             expression=expression,
             location=Location(
-                self.current_token.location.file,
+                self._current_token.location.file,
                 identifier.location.start,
                 expression.location.end,
             ),
         )
 
     def _statement(self) -> StatementType:
-        match self.current_token.kind:
+        match self._current_token.kind:
             case TokenKind.OPEN_BRACE:
                 return self._block_statement()
             case TokenKind.IF:
@@ -392,12 +392,12 @@ class Parser:
                 return self._assignment_statement()
             case _:
                 raise TaipanSyntaxError(
-                    self.current_token.location,
-                    f"Expected statement, got {self.current_token.kind}",
+                    self._current_token.location,
+                    f"Expected statement, got {self._current_token.kind}",
                 )
 
     def _skip_nl(self) -> None:
-        while self.current_token.kind == TokenKind.NEWLINE:
+        while self._current_token.kind == TokenKind.NEWLINE:
             self._next_token()
 
     def _nl(self) -> None:

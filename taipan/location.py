@@ -15,3 +15,6 @@ class Location:
     file: Path
     start: Position
     end: Position
+
+
+__all__ = ["Position", "Location"]

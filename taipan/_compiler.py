@@ -4,12 +4,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-from taipan.analyzer import Analyzer
-from taipan.emitter import Emitter
+from taipan._analyzer import Analyzer
+from taipan._emitter import Emitter
+from taipan._parser import Parser
 from taipan.exceptions import TaipanCompilationError
-from taipan.parser import Parser
 
-OPTIMIZATION_FLAG = "-Ofast"
+_OPTIMIZATION_FLAG = "-Ofast"
 
 
 def _find_clang() -> Path:
@@ -41,7 +41,7 @@ def _clang_compile(code: str, destination: Path, optimize: bool) -> None:
 
     command = [str(clang)]
     if optimize:
-        command.append(OPTIMIZATION_FLAG)
+        command.append(_OPTIMIZATION_FLAG)
     command.extend(["-o", str(destination), "-xc", "-"])
 
     result = subprocess.run(

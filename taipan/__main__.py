@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from taipan import compiler
+from taipan import _compiler
 
 
 @click.group()
@@ -22,9 +22,9 @@ def build(input: Path, output: Path | None, compile_c: bool, optimize: bool) -> 
         output = Path(input.name.removesuffix(".tp"))
 
     if compile_c:
-        compiler.compile_to_c(input, output)
+        _compiler.compile_to_c(input, output)
     else:
-        compiler.compile(input, output, optimize)
+        _compiler.compile(input, output, optimize)
 
 
 @cli.command()
@@ -34,7 +34,7 @@ def build(input: Path, output: Path | None, compile_c: bool, optimize: bool) -> 
 def run(input: Path, args: tuple[str, ...], optimize: bool) -> None:
     """Run Taipan code with arguments"""
     output_name = input.with_suffix("").name
-    compiler.run(input, output_name, args, optimize)
+    _compiler.run(input, output_name, args, optimize)
 
 
 if __name__ == "__main__":

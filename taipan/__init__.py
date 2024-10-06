@@ -1,5 +1,5 @@
-from taipan.compiler import compile, compile_to_c, run
-from taipan.parser import Parser
+from taipan._compiler import compile, compile_to_c, run
+from taipan._parser import Parser
 
 parse = Parser.parse
 

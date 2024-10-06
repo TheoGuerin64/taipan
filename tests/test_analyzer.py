@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from taipan.analyzer import Analyzer
+from taipan._analyzer import Analyzer
+from taipan._parser import Parser
 from taipan.exceptions import TaipanSemanticError
-from taipan.parser import Parser
 
 DEFAULT_FILE = Path("file.tp")
 

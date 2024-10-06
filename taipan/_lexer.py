@@ -48,7 +48,7 @@ class Token:
     value: str | float | None = None
 
 
-ONE_CHAR_TOKEN_KIND = {
+_ONE_CHAR_TOKEN_KIND = {
     "\n": TokenKind.NEWLINE,
     "+": TokenKind.PLUS,
     "-": TokenKind.MINUS,
@@ -60,14 +60,14 @@ ONE_CHAR_TOKEN_KIND = {
     ")": TokenKind.CLOSE_PARENTHESE,
 }
 
-TWO_CHAR_TOKEN_KIND = {
+_TWO_CHAR_TOKEN_KIND = {
     "=": ("=", TokenKind.EQUAL, TokenKind.ASSIGNMENT),
     "!": ("=", TokenKind.NOT_EQUAL, None),
     "<": ("=", TokenKind.LESS_EQUAL, TokenKind.LESS),
     ">": ("=", TokenKind.GREATER_EQUAL, TokenKind.GREATER),
 }
 
-KEYWORD_TOKEN_KIND = {
+_KEYWORD_TOKEN_KIND = {
     "if": TokenKind.IF,
     "else": TokenKind.ELSE,
     "while": TokenKind.WHILE,
@@ -85,63 +85,63 @@ class Lexer:
             except OSError as error:
                 raise TaipanFileError(input_, error.strerror)
 
-        self.source = raw_source + "\n"
+        self._source = raw_source + "\n"
 
-        self.file = input_
-        self.line = 1
-        self.column = 0
+        self._file = input_
+        self._line = 1
+        self._column = 0
 
-        self.index = -1
-        self.char = ""
+        self._index = -1
+        self._char = ""
         self._read_char()
 
     def _read_char(self) -> None:
-        if self.char == "\n":
-            self.line += 1
-            self.column = 1
+        if self._char == "\n":
+            self._line += 1
+            self._column = 1
         else:
-            self.column += 1
+            self._column += 1
 
-        self.index += 1
+        self._index += 1
         try:
-            self.char = self.source[self.index]
+            self._char = self._source[self._index]
         except IndexError:
-            self.char = "\0"
+            self._char = "\0"
 
     def _peek_char(self) -> str:
         try:
-            return self.source[self.index + 1]
+            return self._source[self._index + 1]
         except IndexError:
             return "\0"
 
     def _skip_whitespaces(self) -> None:
-        while self.char == " " or self.char == "\t":
+        while self._char == " " or self._char == "\t":
             self._read_char()
 
     def _skip_comments(self) -> None:
-        if self.char == "#":
+        if self._char == "#":
             self._read_char()
-            while self.char != "\n":
+            while self._char != "\n":
                 self._read_char()
 
     def _get_location(self, size: int) -> Location:
         return Location(
-            self.file,
-            Position(self.line, self.column),
-            Position(self.line, self.column + size),
+            self._file,
+            Position(self._line, self._column),
+            Position(self._line, self._column + size),
         )
 
     def _get_two_char_token(
         self, next: str, if_next: TokenKind, otherwise: TokenKind | None
     ) -> Token:
-        start_position = Position(self.line, self.column)
+        start_position = Position(self._line, self._column)
 
         peek = self._peek_char()
         if peek != next:
             location = Location(
-                self.file,
+                self._file,
                 start_position,
-                Position(self.line, self.column + 1),
+                Position(self._line, self._column + 1),
             )
 
             if not otherwise:
@@ -150,38 +150,38 @@ class Lexer:
 
         self._read_char()
         location = Location(
-            self.file,
+            self._file,
             start_position,
-            Position(self.line, self.column + 1),
+            Position(self._line, self._column + 1),
         )
         return Token(if_next, location)
 
     def _get_string_token(self) -> Token:
-        start_position = Position(self.line, self.column)
+        start_position = Position(self._line, self._column)
         self._read_char()
 
-        start = self.index
-        while self.char != '"':
-            if self.char == "\n":
+        start = self._index
+        while self._char != '"':
+            if self._char == "\n":
                 location = Location(
-                    self.file,
+                    self._file,
                     start_position,
-                    Position(self.line, self.column),
+                    Position(self._line, self._column),
                 )
                 raise TaipanSyntaxError(location, "Missing closing quote")
             self._read_char()
 
         location = location = Location(
-            self.file,
+            self._file,
             start_position,
-            Position(self.line, self.column + 1),
+            Position(self._line, self._column + 1),
         )
-        return Token(TokenKind.STRING, location, self.source[start : self.index])
+        return Token(TokenKind.STRING, location, self._source[start : self._index])
 
     def _get_number_token(self) -> Token:
-        start_position = Position(self.line, self.column)
+        start_position = Position(self._line, self._column)
 
-        start = self.index
+        start = self._index
         while self._peek_char().isdigit():
             self._read_char()
         if self._peek_char() == ".":
@@ -189,11 +189,11 @@ class Lexer:
             while self._peek_char().isdigit():
                 self._read_char()
 
-        value = self.source[start : self.index + 1]
+        value = self._source[start : self._index + 1]
         location = Location(
-            self.file,
+            self._file,
             start_position,
-            Position(self.line, self.column + 1),
+            Position(self._line, self._column + 1),
         )
         if value == ".":
             raise TaipanSyntaxError(location, "Invalid number")
@@ -201,21 +201,21 @@ class Lexer:
         return Token(TokenKind.NUMBER, location, float(value))
 
     def _read_identifier(self) -> str:
-        start = self.index
+        start = self._index
         while self._peek_char().isalnum() or self._peek_char() == "_":
             self._read_char()
-        return self.source[start : self.index + 1]
+        return self._source[start : self._index + 1]
 
     def _get_identifier_token(self) -> Token:
-        start_position = Position(self.line, self.column)
+        start_position = Position(self._line, self._column)
         identifier = self._read_identifier()
         location = Location(
-            self.file,
+            self._file,
             start_position,
-            Position(self.line, self.column + 1),
+            Position(self._line, self._column + 1),
         )
 
-        if keyword_kind := KEYWORD_TOKEN_KIND.get(identifier):
+        if keyword_kind := _KEYWORD_TOKEN_KIND.get(identifier):
             return Token(keyword_kind, location)
 
         if len(identifier) > 32:
@@ -226,14 +226,14 @@ class Lexer:
         self._skip_whitespaces()
         self._skip_comments()
 
-        match self.char:
+        match self._char:
             case "\0":
                 location = self._get_location(0)
                 token = Token(TokenKind.EOF, location)
-            case char if token_kind := ONE_CHAR_TOKEN_KIND.get(char):
+            case char if token_kind := _ONE_CHAR_TOKEN_KIND.get(char):
                 location = self._get_location(1)
                 token = Token(token_kind, location)
-            case char if token_info := TWO_CHAR_TOKEN_KIND.get(char):
+            case char if token_info := _TWO_CHAR_TOKEN_KIND.get(char):
                 token = self._get_two_char_token(*token_info)
             case '"':
                 token = self._get_string_token()

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from taipan._parser import Parser
 from taipan.ast import (
     ArithmeticOperator,
     Assignment,
@@ -24,7 +25,6 @@ from taipan.ast import (
 )
 from taipan.exceptions import TaipanSyntaxError
 from taipan.location import Location, Position
-from taipan.parser import Parser
 from taipan.symbol_table import SymbolTable
 
 DEFAULT_FILE = Path("file.tp")

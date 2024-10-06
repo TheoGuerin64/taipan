@@ -5,10 +5,10 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import override
 
-from taipan.lexer import Token, TokenKind
+from taipan._lexer import Token, TokenKind
+from taipan._visitor import Visitor
 from taipan.location import Location
 from taipan.symbol_table import SymbolTable
-from taipan.visitor import Visitor
 
 type ExpressionType = (
     Identifier | Number | ParentheseExpression | UnaryExpression | BinaryExpression | Comparison
@@ -251,3 +251,34 @@ class Program:
 @dataclass
 class AST:
     root: Program
+
+
+__all__ = [
+    "AST",
+    "ArithmeticOperator",
+    "Assignment",
+    "BinaryExpression",
+    "Block",
+    "Comparison",
+    "ComparisonOperator",
+    "Declaration",
+    "Expression",
+    "ExpressionType",
+    "Identifier",
+    "If",
+    "Input",
+    "Literal",
+    "LiteralType",
+    "Node",
+    "Number",
+    "ParentheseExpression",
+    "Print",
+    "Program",
+    "Statement",
+    "StatementType",
+    "String",
+    "UnaryExpression",
+    "UnaryOperator",
+    "While",
+    "AST",
+]
