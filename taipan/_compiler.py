@@ -88,7 +88,9 @@ def run(input: Path, args: tuple[str, ...], optimize: bool) -> int:
 
         process = subprocess.Popen(args, executable=output)
         try:
-            return process.wait()
+            exit_code = process.wait()
         except KeyboardInterrupt:
             process.send_signal(signal.SIGINT)
-            return 128 - process.wait()
+            exit_code = 128 - process.wait()
+
+        return exit_code
