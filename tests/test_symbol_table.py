@@ -1,13 +1,10 @@
-from pathlib import Path
-
 import pytest
 
 from taipan.location import Location, Position
 from taipan.symbol_table import SymbolTable, TaipanSemanticError
 
-TP_FILE = Path("file.tp")
 LOCATION = Location(
-    TP_FILE,
+    None,
     start=Position(line=1, column=1),
     end=Position(line=1, column=2),
 )

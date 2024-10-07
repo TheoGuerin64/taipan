@@ -2,16 +2,14 @@ from pathlib import Path
 
 import pytest
 
+from taipan import parse
 from taipan._analyzer import Analyzer
-from taipan._parser import Parser
 from taipan.exceptions import TaipanSemanticError
-
-DEFAULT_FILE = Path("file.tp")
 
 
 class TestAnalyzer:
     def compile_and_analyze(self, code: str) -> None:
-        ast = Parser.parse(DEFAULT_FILE, code)
+        ast = parse(code)
         Analyzer.analyze(ast)
 
     def test_redefine(self, tmp_path: Path) -> None:

@@ -1,7 +1,3 @@
-from taipan._compiler import compile, compile_to_c, run
-from taipan._parser import Parser
+from taipan._parser import parse
 
-parse = Parser.parse
-
-
-__all__ = ["compile", "compile_to_c", "run", "parse"]
+__all__ = ["parse"]

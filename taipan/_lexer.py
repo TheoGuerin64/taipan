@@ -78,22 +78,26 @@ _KEYWORD_TOKEN_KIND = {
 
 
 class Lexer:
-    def __init__(self, input_: Path, raw_source: str | None = None) -> None:
-        if raw_source is None:
-            try:
-                raw_source = input_.read_text()
-            except OSError as error:
-                raise TaipanFileError(input_, error.strerror)
+    def __init__(self, input_: Path | str) -> None:
+        self._source = self._get_source(input_) + "\n"
 
-        self._source = raw_source + "\n"
-
-        self._file = input_
+        self._file = input_ if isinstance(input_, Path) else None
         self._line = 1
         self._column = 0
 
         self._index = -1
         self._char = ""
         self._read_char()
+
+    def _get_source(self, input_: Path | str) -> str:
+        match input_:
+            case Path():
+                try:
+                    return input_.read_text()
+                except OSError as error:
+                    raise TaipanFileError(input_, error.strerror)
+            case str():
+                return input_
 
     def _read_char(self) -> None:
         if self._char == "\n":

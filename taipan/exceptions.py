@@ -33,9 +33,8 @@ class TaipanLocationError(TaipanError):
     ERROR_TYPE = "LocationError"
 
     def __init__(self, location: Location, message: str) -> None:
-        super().__init__(
-            f"{location.file}:{location.start.line}:{location.start.column}: {message}"
-        )
+        file = location.file or "<string>"
+        super().__init__(f"{file}:{location.start.line}:{location.start.column}: {message}")
         self.location = location
 
 

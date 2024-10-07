@@ -1,5 +1,6 @@
 from collections import deque
 from pathlib import Path
+from typing import overload
 
 from taipan._lexer import Lexer, Token, TokenKind
 from taipan.ast import (
@@ -33,8 +34,8 @@ _INVALID_TOKEN = Token(TokenKind.EOF, Location(Path(""), Position(-1, -1), Posit
 
 
 class Parser:
-    def __init__(self, input: Path, raw_source: str | None = None) -> None:
-        self._lexer = Lexer(input, raw_source)
+    def __init__(self, input_: Path | str) -> None:
+        self._lexer = Lexer(input_)
         self._symbol_tables = deque[SymbolTable]()
 
         self._current_token = _INVALID_TOKEN
@@ -42,10 +43,8 @@ class Parser:
         self._next_token()
         self._next_token()
 
-    @classmethod
-    def parse(cls, input: Path, raw_source: str | None = None) -> AST:
-        parser = cls(input, raw_source)
-        return AST(parser._program())
+    def parse(self) -> AST:
+        return AST(self._program())
 
     def _expect_token(self, token_kind: TokenKind) -> None:
         if self._current_token.kind != token_kind:
@@ -403,3 +402,18 @@ class Parser:
     def _nl(self) -> None:
         self._match_token(TokenKind.NEWLINE)
         self._skip_nl()
+
+
+@overload
+def parse(input_: Path) -> AST:
+    """Parse from a file."""
+
+
+@overload
+def parse(input_: str) -> AST:
+    """Parse from a string."""
+
+
+def parse(input_: Path | str) -> AST:
+    parser = Parser(input_)
+    return parser.parse()

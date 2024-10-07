@@ -12,7 +12,7 @@ class Position:
 
 @dataclass(frozen=True)
 class Location:
-    file: Path
+    file: Path | None
     start: Position
     end: Position
 
