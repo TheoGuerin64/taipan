@@ -17,4 +17,7 @@ class Location:
     end: Position
 
 
-__all__ = ["Position", "Location"]
+__all__ = [
+    "Position",
+    "Location",
+]

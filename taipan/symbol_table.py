@@ -16,3 +16,8 @@ class SymbolTable:
 
     def lookup(self, name: str) -> Location | None:
         return self.symbols.get(name)
+
+
+__all__ = [
+    "SymbolTable",
+]

@@ -48,3 +48,13 @@ class TaipanSemanticError(TaipanLocationError):
 
 class TaipanCompilationError(TaipanError):
     ERROR_TYPE = "CompilationError"
+
+
+__all__ = [
+    "TaipanError",
+    "TaipanFileError",
+    "TaipanLocationError",
+    "TaipanSyntaxError",
+    "TaipanSemanticError",
+    "TaipanCompilationError",
+]
