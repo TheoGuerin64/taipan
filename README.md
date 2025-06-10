@@ -7,11 +7,12 @@ Taipan is a simple imperative programming language.
 - [Python 3.12](https://www.python.org/downloads/release/python-3120/) or later
 - [clang](https://clang.llvm.org/)
 - [clang-format](https://clang.llvm.org/docs/ClangFormat.html) (optional)
+- [Poetry](https://python-poetry.org/docs/)
 
-## Install
+## install
 
 ```bash
-pip install taipan-lang
+poetry install
 ```
 
 ## Usage
@@ -42,14 +43,9 @@ taipan --help
 
 ## Development
 
-### Requirements
-
-- [Poetry](https://python-poetry.org/docs/)
-
-### install
+### pre-commit
 
 ```bash
-poetry install
 pre-commit install
 ```
 
